@@ -1,0 +1,18 @@
+* {
+  box-sizing: border-box;
+}
+
+.cell {
+  border: 2px black;
+  width: 50px;
+}
+
+.board {
+  display: flex;
+  flex-flow: column;
+}
+
+.row {
+  display: flex;
+  flex-flow: row;
+}
