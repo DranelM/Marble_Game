@@ -6,6 +6,11 @@ interface IProps {
   solutionLength: number;
 }
 
+interface ICell {
+  color: string;
+  isClicked?: boolean;
+}
+
 const MARBLECOLORCLASSES = ["", "blueMarble", "pinkMarble", "orangeMarble"];
 
 const Board: FunctionComponent<IProps> = (props) => {
@@ -18,7 +23,7 @@ const Board: FunctionComponent<IProps> = (props) => {
   const [boardComposition, setBoardComposition] = useState(
     [...Array(boardSize).keys()].map((rowIdx) => {
       return [...Array(boardSize).keys()].map((colIdx) => {
-        return "";
+        return { color: "" };
       });
     })
   );
@@ -43,17 +48,17 @@ const Board: FunctionComponent<IProps> = (props) => {
     return boardComposition.map((row, rowIdx) => renderRow(row, rowIdx));
   }
 
-  function renderRow(row: string[], rowIdx: number) {
+  function renderRow(row: ICell[], rowIdx: number) {
     return (
       <div className="row" key={rowIdx}>
-        {row.map((cellContent: string, colIdx: number) => {
+        {row.map((cell: ICell, colIdx: number) => {
           return (
             <Cell
               key={colIdx}
               col={colIdx}
               row={rowIdx}
-              color={cellContent}
-              onClick={() => handleClick(rowIdx, colIdx, cellContent)}
+              color={cell.color}
+              onClick={() => handleClick(rowIdx, colIdx, cell)}
             />
           );
         })}
@@ -61,7 +66,7 @@ const Board: FunctionComponent<IProps> = (props) => {
     );
   }
 
-  function handleClick(rowIdx: number, colIdx: number, cellContent: string) {
+  function handleClick(rowIdx: number, colIdx: number, cell: ICell) {
     const isFirstClick =
       Object.keys(clickedCells.firstClickedCell).length === 0;
     const isSecondClick =
@@ -71,12 +76,12 @@ const Board: FunctionComponent<IProps> = (props) => {
     if (isFirstClick) {
       setClickedCells({
         ...clickedCells,
-        firstClickedCell: { row: rowIdx, col: colIdx, color: cellContent },
+        firstClickedCell: { row: rowIdx, col: colIdx, color: cell.color },
       });
     } else if (isSecondClick) {
       setClickedCells({
         ...clickedCells,
-        secondClickedCell: { row: rowIdx, col: colIdx, color: cellContent },
+        secondClickedCell: { row: rowIdx, col: colIdx, color: cell.color },
       });
     } else {
       switchSelectedCells();
@@ -94,15 +99,15 @@ const Board: FunctionComponent<IProps> = (props) => {
     let boardCompositionCopy = JSON.parse(JSON.stringify(boardComposition));
     let isValid;
     do {
-      boardCompositionCopy.map((row: string[], rowIdx: number) =>
-        row.map((cellContent: string, colIdx: number) => {
+      boardCompositionCopy.map((row: ICell[], rowIdx: number) =>
+        row.map((cellContent: ICell, colIdx: number) => {
           let randomColor, horizontalSolution, verticalSolution;
           let possibleColors = [...MARBLECOLORCLASSES.slice(1)];
           do {
             randomColor =
               possibleColors[Math.floor(Math.random() * possibleColors.length)];
             possibleColors.splice(possibleColors.indexOf(randomColor), 1);
-            boardCompositionCopy[rowIdx][colIdx] = randomColor;
+            boardCompositionCopy[rowIdx][colIdx].color = randomColor;
             [horizontalSolution, verticalSolution] = checkForSolution(
               colIdx,
               rowIdx,
@@ -123,12 +128,12 @@ const Board: FunctionComponent<IProps> = (props) => {
     return boardCompositionCopy;
   }
 
-  function isWholeBoardFilled(boardComposition: string[][]) {
-    return boardComposition.reduce((acc: boolean, cur: string[]) => {
+  function isWholeBoardFilled(boardComposition: ICell[][]) {
+    return boardComposition.reduce((acc: boolean, cur: ICell[]) => {
       return (
         acc &&
         cur.reduce((acc, cur) => {
-          return acc && cur !== "";
+          return acc && cur.color !== "";
         }, true)
       );
     }, true);
@@ -137,14 +142,14 @@ const Board: FunctionComponent<IProps> = (props) => {
   function checkForSolution(
     col: number,
     row: number,
-    boardComposition: string[][]
+    boardComposition: ICell[][]
   ) {
     const [leftOff, rightOff, topOff, bottomOff] = setTheOffset(col, row);
-    const cellColor = boardComposition[row][col];
+    const cellColor = boardComposition[row][col].color;
     // check for the solution from left to right
     let horizontalSolution: { col: number; row: number }[] = [];
     for (let i = leftOff; i <= rightOff; i++) {
-      if (boardComposition[row][i] === cellColor) {
+      if (boardComposition[row][i].color === cellColor) {
         horizontalSolution.push({
           col: i,
           row: row,
@@ -159,7 +164,7 @@ const Board: FunctionComponent<IProps> = (props) => {
 
     let verticalSolution: { col: number; row: number }[] = [];
     for (let i = topOff; i <= bottomOff; i++) {
-      if (boardComposition[i][col] === cellColor) {
+      if (boardComposition[i][col].color === cellColor) {
         verticalSolution.push({
           col: col,
           row: i,
