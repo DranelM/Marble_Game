@@ -4,7 +4,7 @@
 
 .cell {
   border: 2px black;
-  width: 50px;
+  width: 30px;
 }
 
 .board {
@@ -15,4 +15,25 @@
 .row {
   display: flex;
   flex-flow: row;
+}
+
+.marble {
+  height: 30px;
+  width: 30px;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 1px;
+}
+
+.blueMarble {
+  background-color: rgba(5, 143, 255, 0.85);
+}
+
+.pinkMarble {
+  background-color: rgb(255, 4, 164);
+}
+
+.orangeMarble {
+  background-color: rgb(255, 103, 26);
 }
