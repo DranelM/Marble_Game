@@ -1,12 +1,14 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import Cell from "./Cell";
+import Marble from "./Marble";
 
 interface IProps {
   boardSize: number;
   solutionLength: number;
 }
 
-interface ICell {
+interface IMarble {
+  rowIdx: number;
+  colIdx: number;
   color: string;
   isClicked?: boolean;
 }
@@ -15,15 +17,15 @@ const MARBLECOLORCLASSES = ["", "blueMarble", "pinkMarble", "orangeMarble"];
 
 const Board: FunctionComponent<IProps> = (props) => {
   const { boardSize, solutionLength } = props;
-  const [clickedCells, setClickedCells] = useState({
-    firstClickedCell: {},
-    secondClickedCell: {},
+  const [clickedMarbles, setClickedMarbles] = useState({
+    firstClickedMarble: { rowIdx: -1, colIdx: -1, color: "" },
+    secondClickedMarble: { rowIdx: -1, colIdx: -1, color: "" },
   });
 
   const [boardComposition, setBoardComposition] = useState(
     [...Array(boardSize).keys()].map((rowIdx) => {
       return [...Array(boardSize).keys()].map((colIdx) => {
-        return { color: "" };
+        return { rowIdx: rowIdx, colIdx: colIdx, color: "" };
       });
     })
   );
@@ -34,9 +36,8 @@ const Board: FunctionComponent<IProps> = (props) => {
       let newBoardComposition = createProperlyShuffledBoard();
       setBoardComposition((boardComposition) => newBoardComposition);
       setBoardState("loaded");
-    } else if (boardState === "loaded") {
-      console.log("Board is loaded");
-    } else if (boardState === "toCheck") {
+    } else if (boardState === "switchMarbles") {
+      switchSelectedMarbles();
     }
   }, [boardComposition]);
 
@@ -48,59 +49,126 @@ const Board: FunctionComponent<IProps> = (props) => {
     return boardComposition.map((row, rowIdx) => renderRow(row, rowIdx));
   }
 
-  function renderRow(row: ICell[], rowIdx: number) {
+  function renderRow(row: IMarble[], rowIdx: number) {
     return (
       <div className="row" key={rowIdx}>
-        {row.map((cell: ICell, colIdx: number) => {
+        {row.map((marble: IMarble, colIdx: number) => {
           return (
-            <Cell
-              key={colIdx}
-              col={colIdx}
-              row={rowIdx}
-              color={cell.color}
-              onClick={() => handleClick(rowIdx, colIdx, cell)}
-            />
+            <div className="cellBox" key={colIdx}>
+              <Marble
+                key={marble.colIdx}
+                col={marble.colIdx}
+                row={marble.rowIdx}
+                color={marble.color}
+                onClick={() => handleClick(marble)}
+                isClicked={marble.isClicked}
+              />
+            </div>
           );
         })}
       </div>
     );
   }
 
-  function handleClick(rowIdx: number, colIdx: number, cell: ICell) {
-    const isFirstClick =
-      Object.keys(clickedCells.firstClickedCell).length === 0;
+  function handleClick(marble: IMarble) {
+    const rowIdx = marble.rowIdx;
+    const colIdx = marble.colIdx;
+    const isFirstClick = clickedMarbles.firstClickedMarble.color === "";
     const isSecondClick =
-      Object.keys(clickedCells.firstClickedCell).length > 0 &&
-      Object.keys(clickedCells.secondClickedCell).length === 0;
+      !!clickedMarbles.firstClickedMarble.color &&
+      clickedMarbles.secondClickedMarble.color === "";
 
+    const newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
+    const justClickedMarble = newBoardComposition[rowIdx][colIdx];
     if (isFirstClick) {
-      setClickedCells({
-        ...clickedCells,
-        firstClickedCell: { row: rowIdx, col: colIdx, color: cell.color },
+      justClickedMarble.isClicked = true;
+      setBoardComposition(newBoardComposition);
+      setClickedMarbles({
+        ...clickedMarbles,
+        firstClickedMarble: justClickedMarble,
       });
     } else if (isSecondClick) {
-      setClickedCells({
-        ...clickedCells,
-        secondClickedCell: { row: rowIdx, col: colIdx, color: cell.color },
-      });
-    } else {
-      switchSelectedCells();
+      const isValid = areNeighbors(
+        clickedMarbles.firstClickedMarble,
+        justClickedMarble
+      );
+
+      if (isValid) {
+        justClickedMarble.isClicked = true;
+        setBoardComposition(newBoardComposition);
+        setClickedMarbles({
+          ...clickedMarbles,
+          secondClickedMarble: justClickedMarble,
+        });
+        setBoardState("switchMarbles");
+      }
     }
   }
 
-  function switchSelectedCells() {
-    console.log(clickedCells);
+  function areNeighbors(marble1: IMarble, marble2: IMarble) {
+    const marble1Neighbors = getNeighbors(marble1.rowIdx, marble1.colIdx);
+    const isANeighborOfFirstMarble = marble1Neighbors.reduce(
+      (acc, neighbor) =>
+        acc ||
+        (neighbor.rowIdx === marble2.rowIdx &&
+          neighbor.colIdx === marble2.colIdx),
+      false
+    );
+
+    return isANeighborOfFirstMarble;
+  }
+
+  function getNeighbors(rowIdx: number, colIdx: number) {
+    let neighbors = [];
+    if (rowIdx - 1 >= 0) {
+      neighbors.push({ rowIdx: rowIdx - 1, colIdx: colIdx });
+    }
+    if (rowIdx + 1 < boardSize) {
+      neighbors.push({ rowIdx: rowIdx + 1, colIdx: colIdx });
+    }
+    if (colIdx - 1 >= 0) {
+      neighbors.push({ rowIdx: rowIdx, colIdx: colIdx - 1 });
+    }
+    if (colIdx + 1 < boardSize) {
+      neighbors.push({ rowIdx: rowIdx, colIdx: colIdx + 1 });
+    }
+
+    return neighbors;
+  }
+
+  function switchSelectedMarbles() {
     const newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
-    newBoardComposition[0][0] = MARBLECOLORCLASSES[2];
+
+    const firstMarble =
+      newBoardComposition[clickedMarbles.firstClickedMarble.rowIdx][
+        clickedMarbles.firstClickedMarble.colIdx
+      ];
+
+    const secondMarble =
+      newBoardComposition[clickedMarbles.secondClickedMarble.rowIdx][
+        clickedMarbles.secondClickedMarble.colIdx
+      ];
+
+    firstMarble.color = clickedMarbles.secondClickedMarble.color;
+    secondMarble.color = clickedMarbles.firstClickedMarble.color;
+
+    firstMarble.isClicked = false;
+    secondMarble.isClicked = false;
+
+    setClickedMarbles({
+      firstClickedMarble: { rowIdx: -1, colIdx: -1, color: "" },
+      secondClickedMarble: { rowIdx: -1, colIdx: -1, color: "" },
+    });
     setBoardComposition(newBoardComposition);
+    setBoardState("loaded");
   }
 
   function createProperlyShuffledBoard() {
     let boardCompositionCopy = JSON.parse(JSON.stringify(boardComposition));
     let isValid;
     do {
-      boardCompositionCopy.map((row: ICell[], rowIdx: number) =>
-        row.map((cellContent: ICell, colIdx: number) => {
+      boardCompositionCopy.map((row: IMarble[], rowIdx: number) =>
+        row.map((marbleContent: IMarble, colIdx: number) => {
           let randomColor, horizontalSolution, verticalSolution;
           let possibleColors = [...MARBLECOLORCLASSES.slice(1)];
           do {
@@ -128,8 +196,8 @@ const Board: FunctionComponent<IProps> = (props) => {
     return boardCompositionCopy;
   }
 
-  function isWholeBoardFilled(boardComposition: ICell[][]) {
-    return boardComposition.reduce((acc: boolean, cur: ICell[]) => {
+  function isWholeBoardFilled(boardComposition: IMarble[][]) {
+    return boardComposition.reduce((acc: boolean, cur: IMarble[]) => {
       return (
         acc &&
         cur.reduce((acc, cur) => {
@@ -142,14 +210,14 @@ const Board: FunctionComponent<IProps> = (props) => {
   function checkForSolution(
     col: number,
     row: number,
-    boardComposition: ICell[][]
+    boardComposition: IMarble[][]
   ) {
     const [leftOff, rightOff, topOff, bottomOff] = setTheOffset(col, row);
-    const cellColor = boardComposition[row][col].color;
+    const marbleColor = boardComposition[row][col].color;
     // check for the solution from left to right
     let horizontalSolution: { col: number; row: number }[] = [];
     for (let i = leftOff; i <= rightOff; i++) {
-      if (boardComposition[row][i].color === cellColor) {
+      if (boardComposition[row][i].color === marbleColor) {
         horizontalSolution.push({
           col: i,
           row: row,
@@ -164,7 +232,7 @@ const Board: FunctionComponent<IProps> = (props) => {
 
     let verticalSolution: { col: number; row: number }[] = [];
     for (let i = topOff; i <= bottomOff; i++) {
-      if (boardComposition[i][col].color === cellColor) {
+      if (boardComposition[i][col].color === marbleColor) {
         verticalSolution.push({
           col: col,
           row: i,

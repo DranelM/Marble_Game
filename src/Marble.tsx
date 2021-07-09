@@ -5,13 +5,16 @@ interface IProps {
   row: number;
   color: string;
   onClick: MouseEventHandler<HTMLDivElement>;
+  isClicked?: boolean;
 }
 
-const Cell: FunctionComponent<IProps> = (props) => {
-  const { col, row, color } = props;
-  let className = "cell marble " + color;
+const Marble: FunctionComponent<IProps> = (props) => {
+  const { col, row, color, isClicked } = props;
+  const clicked = isClicked ? "clicked" : "";
+
+  let className = `marble ${color} ${clicked}`;
 
   return <div className={className} onClick={props.onClick}></div>;
 };
 
-export default Cell;
+export default Marble;

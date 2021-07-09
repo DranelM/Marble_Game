@@ -3,28 +3,42 @@
   background-color: black;
 }
 
-.cell {
-  border: 2px black;
-  width: 30px;
+:root {
+  --board-size: 5;
+  --cell-size: 30px;
+  --small-marble: 20px;
 }
 
 .board {
   display: flex;
   flex-flow: column;
+  gap: 1px;
 }
 
 .row {
   display: flex;
   flex-flow: row;
+  width: calc(var(--board-size) * var(--cell-size));
+}
+
+.cellBox {
+  display: flex;
+  justify-content: center;
+  width: var(--cell-size);
+  height: var(--cell-size);
 }
 
 .marble {
-  height: 30px;
-  width: 30px;
+  height: var(--cell-size);
+  width: var(--cell-size);
   background-color: #bbb;
   border-radius: 50%;
-  display: inline-block;
-  margin: 1px;
+}
+
+.clicked {
+  width: var(--small-marble);
+  height: var(--small-marble);
+  margin: auto;
 }
 
 .blueMarble {
