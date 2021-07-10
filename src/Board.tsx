@@ -37,13 +37,13 @@ const Board: FunctionComponent<IProps> = (props) => {
   const [boardState, setBoardState] = useState("unloaded");
 
   useEffect(() => {
+    let newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
+
     if (boardState === "unloaded") {
-      let newBoardComposition = createProperlyShuffledBoard();
+      newBoardComposition = createProperlyShuffledBoard();
       setBoardComposition((boardComposition) => newBoardComposition);
       setBoardState("loaded");
     } else if (["firstClick", "secondClick"].includes(boardState)) {
-      let newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
-
       if (boardState === "firstClick") {
         const rowIdx = clickedMarbles.firstClickedMarble.rowIdx;
         const colIdx = clickedMarbles.firstClickedMarble.colIdx;
@@ -51,6 +51,7 @@ const Board: FunctionComponent<IProps> = (props) => {
       } else if (boardState === "secondClick") {
         const rowIdx = clickedMarbles.secondClickedMarble.rowIdx;
         const colIdx = clickedMarbles.secondClickedMarble.colIdx;
+
         newBoardComposition[rowIdx][colIdx] =
           clickedMarbles.secondClickedMarble;
 
@@ -65,7 +66,7 @@ const Board: FunctionComponent<IProps> = (props) => {
         );
 
         if (areClicksNeighbors) {
-          setBoardState("switchMarbles");
+          setBoardState("switchClickedMarbles");
         } else if (isFirstMarbleDoubleClicked) {
           newBoardComposition[rowIdx][colIdx].isClicked = false;
           setClickedMarbles({
@@ -98,8 +99,90 @@ const Board: FunctionComponent<IProps> = (props) => {
         }
       }
       setBoardComposition(newBoardComposition);
-    } else if (boardState === "switchMarbles") {
-      switchSelectedMarbles();
+    } else if (boardState === "switchClickedMarbles") {
+      // switchSelectedMarbles();
+      newBoardComposition = switchSelectedMarbles(
+        clickedMarbles.firstClickedMarble,
+        clickedMarbles.secondClickedMarble,
+        newBoardComposition
+      );
+
+      const firstMarble =
+        newBoardComposition[clickedMarbles.firstClickedMarble.rowIdx][
+          clickedMarbles.firstClickedMarble.colIdx
+        ];
+
+      const secondMarble =
+        newBoardComposition[clickedMarbles.secondClickedMarble.rowIdx][
+          clickedMarbles.secondClickedMarble.colIdx
+        ];
+
+      firstMarble.isClicked = false;
+      secondMarble.isClicked = false;
+
+      setClickedMarbles({
+        firstClickedMarble: {
+          rowIdx: -1,
+          colIdx: -1,
+          color: "",
+          isClicked: false,
+        },
+        secondClickedMarble: {
+          rowIdx: -1,
+          colIdx: -1,
+          color: "",
+          isClicked: false,
+        },
+      });
+
+      setBoardComposition(newBoardComposition);
+
+      let readyToPop = findReadyToPopByPositions(
+        newBoardComposition,
+        clickedMarbles.firstClickedMarble,
+        clickedMarbles.secondClickedMarble
+      );
+
+      do {
+        readyToPop.forEach((position: { rowIdx: number; colIdx: number }) => {
+          newBoardComposition[position.rowIdx][position.colIdx].color = "";
+        });
+
+        setBoardComposition(newBoardComposition);
+
+        let closestToTopPops = [];
+        do {
+          closestToTopPops = getClosestToTopPops(readyToPop);
+          closestToTopPops.forEach((marble) => {
+            // switch marbles to the top until the blank marble will
+            // change place with a new marble from outside of the board
+            for (let i = 0; i < marble.rowIdx + 1; i++) {
+              const bottomMarble =
+                newBoardComposition[marble.rowIdx - i][marble.colIdx];
+              const topMarble =
+                marble.rowIdx - i - 1 >= 0
+                  ? newBoardComposition[marble.rowIdx - i - 1][marble.colIdx]
+                  : { rowIdx: -1, colIdx: -1, color: "" };
+              newBoardComposition = switchSelectedMarbles(
+                bottomMarble,
+                topMarble,
+                newBoardComposition
+              );
+            }
+          });
+
+          setBoardComposition(newBoardComposition);
+
+          closestToTopPops.forEach((marbleToDelete) => {
+            readyToPop = readyToPop.filter(
+              (marble) => !areSame(marble, marbleToDelete)
+            );
+          });
+        } while (readyToPop.length);
+        readyToPop = findReadyToPopWholeBoard(newBoardComposition);
+        // setBoardState("checkReadyToPopWholeBoard");
+      } while (readyToPop.length);
+    } else if (boardState === "checkReadyToPopWholeBoard") {
     }
   }, [boardState]);
 
@@ -143,23 +226,21 @@ const Board: FunctionComponent<IProps> = (props) => {
     let isValid;
     do {
       boardCompositionCopy.map((row: IMarble[], rowIdx: number) =>
-        row.map((marbleContent: IMarble, colIdx: number) => {
-          let randomColor, horizontalSolution, verticalSolution;
+        row.map((marble: IMarble, colIdx: number) => {
+          let randomColor, readyToPop;
           let possibleColors = [...MARBLECOLORCLASSES.slice(1)];
           do {
-            randomColor =
-              possibleColors[Math.floor(Math.random() * possibleColors.length)];
+            randomColor = generateNewMarbleColor(possibleColors);
             possibleColors.splice(possibleColors.indexOf(randomColor), 1);
             boardCompositionCopy[rowIdx][colIdx].color = randomColor;
-            [horizontalSolution, verticalSolution] = checkForSolution(
-              colIdx,
-              rowIdx,
-              JSON.parse(JSON.stringify(boardCompositionCopy))
+            readyToPop = findReadyToPopByPositions(
+              JSON.parse(JSON.stringify(boardCompositionCopy)),
+              marble
             );
             if (!possibleColors.length) {
               return "";
             }
-          } while (horizontalSolution.length || verticalSolution.length);
+          } while (readyToPop.length);
 
           return randomColor;
         })
@@ -182,50 +263,64 @@ const Board: FunctionComponent<IProps> = (props) => {
     }, true);
   }
 
-  function checkForSolution(
-    colIdx: number,
-    rowIdx: number,
-    boardComposition: IMarble[][]
-  ) {
-    const [leftOff, rightOff, topOff, bottomOff] = setTheOffset(colIdx, rowIdx);
-    const marbleColor = boardComposition[rowIdx][colIdx].color;
-    // check for the solution from left to right
-    let horizontalSolution: { colIdx: number; rowIdx: number }[] = [];
-    for (let i = leftOff; i <= rightOff; i++) {
-      if (boardComposition[rowIdx][i].color === marbleColor) {
-        horizontalSolution.push({
-          colIdx: i,
-          rowIdx: rowIdx,
-        });
-      } else if (horizontalSolution.length >= solutionLength) {
-        // because there is no chance to get another solution
-        break;
-      } else {
-        horizontalSolution = [];
+  function findReadyToPopByPositions(
+    boardComposition: IMarble[][],
+    ...args: IMarble[]
+  ): IMarble[] {
+    let readyToPop: { rowIdx: number; colIdx: number }[] = [];
+    args.forEach((marble) => {
+      const rowIdx = marble.rowIdx;
+      const colIdx = marble.colIdx;
+
+      const [leftOff, rightOff, topOff, bottomOff] = setTheOffset(
+        colIdx,
+        rowIdx
+      );
+      const marbleColor = boardComposition[rowIdx][colIdx].color;
+      // check for the solution from left to right
+      let horizontalSolution: IMarble[] = [];
+      for (let i = leftOff; i <= rightOff; i++) {
+        if (boardComposition[rowIdx][i].color === marbleColor) {
+          horizontalSolution.push(boardComposition[rowIdx][i]);
+        } else if (horizontalSolution.length >= solutionLength) {
+          // because there is no chance to get another solution
+          break;
+        } else {
+          horizontalSolution = [];
+        }
       }
-    }
 
-    let verticalSolution: { colIdx: number; rowIdx: number }[] = [];
-    for (let i = topOff; i <= bottomOff; i++) {
-      if (boardComposition[i][colIdx].color === marbleColor) {
-        verticalSolution.push({
-          colIdx: colIdx,
-          rowIdx: i,
-        });
-      } else if (verticalSolution.length >= solutionLength) {
-        // because there is no chance to get another solution
-        break;
-      } else {
-        verticalSolution = [];
+      let verticalSolution: IMarble[] = [];
+      for (let i = topOff; i <= bottomOff; i++) {
+        if (boardComposition[i][colIdx].color === marbleColor) {
+          verticalSolution.push(boardComposition[i][colIdx]);
+        } else if (verticalSolution.length >= solutionLength) {
+          // because there is no chance to get another solution
+          break;
+        } else {
+          verticalSolution = [];
+        }
       }
-    }
 
-    horizontalSolution =
-      horizontalSolution.length >= solutionLength ? horizontalSolution : [];
-    verticalSolution =
-      verticalSolution.length >= solutionLength ? verticalSolution : [];
+      horizontalSolution =
+        horizontalSolution.length >= solutionLength ? horizontalSolution : [];
+      verticalSolution =
+        verticalSolution.length >= solutionLength ? verticalSolution : [];
 
-    return [horizontalSolution, verticalSolution];
+      horizontalSolution.forEach((marble) => {
+        readyToPop[hashTheReadyToPopMarble(marble)] = marble;
+      });
+      verticalSolution.forEach((marble) => {
+        readyToPop[hashTheReadyToPopMarble(marble)] = marble;
+      });
+    });
+
+    //@ts-ignore
+    return readyToPop.reduce((acc, cur) => (!!cur ? acc.concat(cur) : acc), []);
+  }
+
+  function hashTheReadyToPopMarble(position: IMarble) {
+    return position.rowIdx * boardSize + position.colIdx;
   }
 
   function setTheOffset(col: number, row: number) {
@@ -323,70 +418,65 @@ const Board: FunctionComponent<IProps> = (props) => {
     return neighbors;
   }
 
-  function switchSelectedMarbles() {
-    const newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
+  function switchSelectedMarbles(
+    firstMarble: IMarble,
+    secondMarble: IMarble,
+    boardComposition: IMarble[][]
+  ) {
+    const isGrabingNewMarbleFromTop = secondMarble.rowIdx === -1;
+    if (isGrabingNewMarbleFromTop) {
+      firstMarble = boardComposition[firstMarble.rowIdx][firstMarble.colIdx];
+      firstMarble.color = generateNewMarbleColor();
+    } else {
+      firstMarble = boardComposition[firstMarble.rowIdx][firstMarble.colIdx];
+      secondMarble = boardComposition[secondMarble.rowIdx][secondMarble.colIdx];
 
-    const firstMarble =
-      newBoardComposition[clickedMarbles.firstClickedMarble.rowIdx][
-        clickedMarbles.firstClickedMarble.colIdx
+      [firstMarble.color, secondMarble.color] = [
+        secondMarble.color,
+        firstMarble.color,
       ];
+    }
 
-    const secondMarble =
-      newBoardComposition[clickedMarbles.secondClickedMarble.rowIdx][
-        clickedMarbles.secondClickedMarble.colIdx
-      ];
-
-    firstMarble.color = clickedMarbles.secondClickedMarble.color;
-    secondMarble.color = clickedMarbles.firstClickedMarble.color;
-
-    const firstMarbleSolutions = checkForSolution(
-      firstMarble.colIdx,
-      firstMarble.rowIdx,
-      newBoardComposition
-    );
-
-    const secondMarbleSolutions = checkForSolution(
-      secondMarble.colIdx,
-      secondMarble.rowIdx,
-      newBoardComposition
-    );
-
-    let marblesToPop = firstMarbleSolutions
-      .reduce((acc, cur) => acc.concat(cur))
-      .concat(secondMarbleSolutions.reduce((acc, cur) => acc.concat(cur)));
-
-    marblesToPop.forEach(
-      (marblePosition) =>
-        (newBoardComposition[marblePosition.rowIdx][
-          marblePosition.colIdx
-        ].color = "")
-    );
-
-    //TODO Calculate Score
-    // debugger;
-
-    firstMarble.isClicked = false;
-    secondMarble.isClicked = false;
-
-    setBoardState("reFillPoppedCherry");
-    setClickedMarbles({
-      firstClickedMarble: {
-        rowIdx: -1,
-        colIdx: -1,
-        color: "",
-        isClicked: false,
-      },
-      secondClickedMarble: {
-        rowIdx: -1,
-        colIdx: -1,
-        color: "",
-        isClicked: false,
-      },
-    });
-    setBoardComposition(newBoardComposition);
+    return boardComposition;
   }
 
   function reFillMarbles() {}
+
+  function getClosestToTopPops(readyToPop: IMarble[]) {
+    let closestToTopLevel = boardSize;
+    let closestToTopPops: IMarble[] = [];
+
+    readyToPop.forEach((marble) => {
+      if (closestToTopLevel > marble.rowIdx) {
+        closestToTopLevel = marble.rowIdx;
+        closestToTopPops = [marble];
+      } else if (closestToTopLevel === marble.rowIdx) {
+        closestToTopPops.push(marble);
+      }
+    });
+
+    return closestToTopPops;
+  }
+
+  function generateNewMarbleColor(possibleColors: string[] = []) {
+    possibleColors = possibleColors.length
+      ? possibleColors
+      : [...MARBLECOLORCLASSES.slice(1)];
+    return possibleColors[Math.floor(Math.random() * possibleColors.length)];
+  }
+
+  function findReadyToPopWholeBoard(boardComposition: IMarble[][]) {
+    let marblesArray = boardComposition.reduce(
+      (acc, curr) => acc.concat(...curr),
+      []
+    );
+    const readyToPop = findReadyToPopByPositions(
+      boardComposition,
+      ...marblesArray
+    );
+
+    return readyToPop;
+  }
 };
 
 export default Board;
