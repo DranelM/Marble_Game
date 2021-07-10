@@ -27,6 +27,8 @@ const Board: FunctionComponent<IProps> = (props) => {
     },
   });
 
+  const [poppedMarbles, setPoppedMarbles] = useState<IMarble[]>([]);
+  const [isBoardReadyToPop, setIsBoardReadyToPop] = useState(false);
   const [boardComposition, setBoardComposition] = useState(
     [...Array(boardSize).keys()].map((rowIdx) => {
       return [...Array(boardSize).keys()].map((colIdx) => {
@@ -37,11 +39,17 @@ const Board: FunctionComponent<IProps> = (props) => {
   const [boardState, setBoardState] = useState("unloaded");
 
   useEffect(() => {
+    if (isBoardReadyToPop) {
+      setBoardState("popReadyToPopMarbles");
+    }
+  }, [isBoardReadyToPop]);
+
+  useEffect(() => {
     let newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
 
     if (boardState === "unloaded") {
       newBoardComposition = createProperlyShuffledBoard();
-      setBoardComposition((boardComposition) => newBoardComposition);
+      setBoardComposition(newBoardComposition);
       setBoardState("loaded");
     } else if (["firstClick", "secondClick"].includes(boardState)) {
       if (boardState === "firstClick") {
@@ -69,20 +77,7 @@ const Board: FunctionComponent<IProps> = (props) => {
           setBoardState("switchClickedMarbles");
         } else if (isFirstMarbleDoubleClicked) {
           newBoardComposition[rowIdx][colIdx].isClicked = false;
-          setClickedMarbles({
-            firstClickedMarble: {
-              rowIdx: -1,
-              colIdx: -1,
-              color: "",
-              isClicked: false,
-            },
-            secondClickedMarble: {
-              rowIdx: -1,
-              colIdx: -1,
-              color: "",
-              isClicked: false,
-            },
-          });
+          resetClickedMarbles();
         } else {
           // if the second click is neither neigbor nor same as first one - aka mistake
           newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
@@ -100,7 +95,6 @@ const Board: FunctionComponent<IProps> = (props) => {
       }
       setBoardComposition(newBoardComposition);
     } else if (boardState === "switchClickedMarbles") {
-      // switchSelectedMarbles();
       newBoardComposition = switchSelectedMarbles(
         clickedMarbles.firstClickedMarble,
         clickedMarbles.secondClickedMarble,
@@ -120,77 +114,48 @@ const Board: FunctionComponent<IProps> = (props) => {
       firstMarble.isClicked = false;
       secondMarble.isClicked = false;
 
-      setClickedMarbles({
-        firstClickedMarble: {
-          rowIdx: -1,
-          colIdx: -1,
-          color: "",
-          isClicked: false,
-        },
-        secondClickedMarble: {
-          rowIdx: -1,
-          colIdx: -1,
-          color: "",
-          isClicked: false,
-        },
-      });
-
+      resetClickedMarbles();
       setBoardComposition(newBoardComposition);
+      setIsBoardReadyToPop(
+        findReadyToPopWholeBoard(newBoardComposition).length > 0
+      );
+    } else if (boardState === "popReadyToPopMarbles") {
+      let readyToPop = findReadyToPopWholeBoard(newBoardComposition);
+      newBoardComposition = popMarbles(readyToPop, newBoardComposition);
 
-      let readyToPop = findReadyToPopByPositions(
-        newBoardComposition,
-        clickedMarbles.firstClickedMarble,
-        clickedMarbles.secondClickedMarble
+      setPoppedMarbles(readyToPop);
+      setBoardComposition(newBoardComposition);
+      setBoardState("refillHighestEmptyLayer");
+    } else if (boardState === "refillHighestEmptyLayer") {
+      debugger;
+      let closestToTopPops = [];
+
+      closestToTopPops = getClosestToTopPops(poppedMarbles);
+      newBoardComposition = refillClosestToTopPops(
+        closestToTopPops,
+        newBoardComposition
+      );
+      const partiallyFilledPoppedMarbles = removeFilledPositions(
+        poppedMarbles,
+        closestToTopPops
       );
 
-      do {
-        readyToPop.forEach((position: { rowIdx: number; colIdx: number }) => {
-          newBoardComposition[position.rowIdx][position.colIdx].color = "";
-        });
-
-        setBoardComposition(newBoardComposition);
-
-        let closestToTopPops = [];
-        do {
-          closestToTopPops = getClosestToTopPops(readyToPop);
-          closestToTopPops.forEach((marble) => {
-            // switch marbles to the top until the blank marble will
-            // change place with a new marble from outside of the board
-            for (let i = 0; i < marble.rowIdx + 1; i++) {
-              const bottomMarble =
-                newBoardComposition[marble.rowIdx - i][marble.colIdx];
-              const topMarble =
-                marble.rowIdx - i - 1 >= 0
-                  ? newBoardComposition[marble.rowIdx - i - 1][marble.colIdx]
-                  : { rowIdx: -1, colIdx: -1, color: "" };
-              newBoardComposition = switchSelectedMarbles(
-                bottomMarble,
-                topMarble,
-                newBoardComposition
-              );
-            }
-          });
-
-          setBoardComposition(newBoardComposition);
-
-          closestToTopPops.forEach((marbleToDelete) => {
-            readyToPop = readyToPop.filter(
-              (marble) => !areSame(marble, marbleToDelete)
-            );
-          });
-        } while (readyToPop.length);
-        readyToPop = findReadyToPopWholeBoard(newBoardComposition);
-        // setBoardState("checkReadyToPopWholeBoard");
-      } while (readyToPop.length);
-    } else if (boardState === "checkReadyToPopWholeBoard") {
+      setPoppedMarbles(partiallyFilledPoppedMarbles);
+      setBoardComposition(newBoardComposition);
+      setIsBoardReadyToPop(
+        findReadyToPopWholeBoard(newBoardComposition).length > 0
+      );
+      setBoardState("checkIfBoardRefilled");
+    } else if (boardState === "checkIfBoardRefilled") {
+      if (poppedMarbles.length > 0) {
+        setBoardState("refillHighestEmptyLayer");
+      } else if (isBoardReadyToPop) {
+        setBoardState("popReadyToPopMarbles");
+      } else {
+        setBoardState("boardFullyRefilled");
+      }
     }
   }, [boardState]);
-
-  useEffect(() => {
-    if (boardState === "reFillPoppedCherry") {
-      reFillMarbles();
-    }
-  }, [boardComposition]);
 
   return <div className="board">{renderBoard()}</div>;
 
@@ -440,8 +405,6 @@ const Board: FunctionComponent<IProps> = (props) => {
     return boardComposition;
   }
 
-  function reFillMarbles() {}
-
   function getClosestToTopPops(readyToPop: IMarble[]) {
     let closestToTopLevel = boardSize;
     let closestToTopPops: IMarble[] = [];
@@ -476,6 +439,65 @@ const Board: FunctionComponent<IProps> = (props) => {
     );
 
     return readyToPop;
+  }
+
+  function resetClickedMarbles() {
+    setClickedMarbles({
+      firstClickedMarble: {
+        rowIdx: -1,
+        colIdx: -1,
+        color: "",
+        isClicked: false,
+      },
+      secondClickedMarble: {
+        rowIdx: -1,
+        colIdx: -1,
+        color: "",
+        isClicked: false,
+      },
+    });
+  }
+
+  function refillClosestToTopPops(
+    closestToTopPops: IMarble[],
+    boardComposition: IMarble[][]
+  ) {
+    closestToTopPops.forEach((marble) => {
+      // switch marbles to the top until the blank marble will
+      // change place with a new marble from outside of the board
+      for (let i = 0; i < marble.rowIdx + 1; i++) {
+        const bottomMarble = boardComposition[marble.rowIdx - i][marble.colIdx];
+        const topMarble =
+          marble.rowIdx - i - 1 >= 0
+            ? boardComposition[marble.rowIdx - i - 1][marble.colIdx]
+            : { rowIdx: -1, colIdx: -1, color: "" };
+        boardComposition = switchSelectedMarbles(
+          bottomMarble,
+          topMarble,
+          boardComposition
+        );
+      }
+    });
+    return boardComposition;
+  }
+
+  function removeFilledPositions(
+    newReadyToPop: IMarble[],
+    closestToTopPops: IMarble[]
+  ) {
+    closestToTopPops.forEach((marbleToDelete) => {
+      newReadyToPop = newReadyToPop.filter(
+        (marble) => !areSame(marble, marbleToDelete)
+      );
+    });
+    return newReadyToPop;
+  }
+
+  function popMarbles(readyToPop: IMarble[], boardComposition: IMarble[][]) {
+    readyToPop.forEach((position: { rowIdx: number; colIdx: number }) => {
+      boardComposition[position.rowIdx][position.colIdx].color = "";
+    });
+    return boardComposition;
   }
 };
 
