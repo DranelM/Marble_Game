@@ -42,7 +42,7 @@ const Board: FunctionComponent<IProps> = (props) => {
   const [boardComposition, setBoardComposition] = useState(
     [...Array(boardSize).keys()].map((rowIdx) => {
       return [...Array(boardSize).keys()].map((colIdx) => {
-        return { rowIdx: rowIdx, colIdx: colIdx, color: "" };
+        return { rowIdx: rowIdx, colIdx: colIdx, color: "", isClicked: false };
       });
     })
   );
@@ -59,9 +59,14 @@ const Board: FunctionComponent<IProps> = (props) => {
   useEffect(() => {
     if (gameOn && timeLeft === 0) {
       clearInterval(gameTimer);
-      setGameOn(false);
       alert("GAME OVER: You Scored " + score + " Points");
       console.log("GAME OVER: You Scored " + score + " Points");
+
+      setGameOn(false);
+      setTimeLeft(timeOfPlay);
+      setScore(0);
+      resetClickedMarbles();
+      setBoardState("unloaded");
     }
   }, [timeLeft]);
 
@@ -82,8 +87,6 @@ const Board: FunctionComponent<IProps> = (props) => {
       /* if first click of the game start timer */
       if (!gameOn) {
         setGameOn(true);
-        setTimeLeft(timeOfPlay);
-        setScore(0);
         // TODO store score in some database
       }
 
@@ -242,7 +245,10 @@ const Board: FunctionComponent<IProps> = (props) => {
           do {
             randomColor = generateNewMarbleColor(possibleColors);
             possibleColors.splice(possibleColors.indexOf(randomColor), 1);
+
             boardCompositionCopy[rowIdx][colIdx].color = randomColor;
+            boardCompositionCopy[rowIdx][colIdx].isClicked = false;
+
             readyToPop = findReadyToPopByPositions(
               JSON.parse(JSON.stringify(boardCompositionCopy)),
               marble
