@@ -17,6 +17,8 @@ interface IMarble {
 }
 
 const MARBLECOLORCLASSES = ["", "blueMarble", "pinkMarble", "orangeMarble"];
+const POINTSPENALTY = 5;
+
 let gameTimer: NodeJS.Timer;
 
 const Board: FunctionComponent<IProps> = (props) => {
@@ -146,9 +148,16 @@ const Board: FunctionComponent<IProps> = (props) => {
 
       resetClickedMarbles();
       setBoardComposition(newBoardComposition);
-      setIsBoardReadyToPop(
-        findReadyToPopWholeBoard(newBoardComposition).length > 0
-      );
+
+      const isReadyToPopMarbles =
+        findReadyToPopWholeBoard(newBoardComposition).length > 0;
+
+      // If player switches marbles without pop he loses points
+      if (!isReadyToPopMarbles) {
+        setScore((score) => score - POINTSPENALTY);
+      }
+
+      setIsBoardReadyToPop(isReadyToPopMarbles);
     } else if (boardState === "popReadyToPopMarbles") {
       let readyToPop = findReadyToPopWholeBoard(newBoardComposition);
       newBoardComposition = popMarbles(readyToPop, newBoardComposition);
