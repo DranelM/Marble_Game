@@ -19,6 +19,10 @@
   color: white;
 }
 
+.gameTimer {
+  color: white;
+}
+
 .row {
   display: flex;
   flex-flow: row;

@@ -3,7 +3,7 @@ import { render } from "react-dom";
 import Board from "./Board";
 
 const App = () => {
-  return <Board boardSize={5} solutionLength={3} />;
+  return <Board boardSize={5} solutionLength={3} timeOfPlay={10} />;
 };
 
 render(

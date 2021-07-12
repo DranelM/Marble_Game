@@ -1,10 +1,12 @@
 import { FunctionComponent, useEffect, useState } from "react";
+import GameTimer from "./GameTimer";
 import Marble from "./Marble";
 import ScoreBoard from "./ScoreBoard";
 
 interface IProps {
   boardSize: number;
   solutionLength: number;
+  timeOfPlay: number;
 }
 
 interface IMarble {
@@ -15,9 +17,10 @@ interface IMarble {
 }
 
 const MARBLECOLORCLASSES = ["", "blueMarble", "pinkMarble", "orangeMarble"];
+let gameTimer: NodeJS.Timer;
 
 const Board: FunctionComponent<IProps> = (props) => {
-  const { boardSize, solutionLength } = props;
+  const { boardSize, solutionLength, timeOfPlay } = props;
   const [clickedMarbles, setClickedMarbles] = useState({
     firstClickedMarble: { rowIdx: -1, colIdx: -1, color: "", isClicked: false },
     secondClickedMarble: {
@@ -28,6 +31,8 @@ const Board: FunctionComponent<IProps> = (props) => {
     },
   });
 
+  const [gameOn, setGameOn] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(timeOfPlay);
   const [score, setScore] = useState(0);
   const [boardState, setBoardState] = useState("unloaded");
   const [poppedMarbles, setPoppedMarbles] = useState<IMarble[]>([]);
@@ -39,6 +44,24 @@ const Board: FunctionComponent<IProps> = (props) => {
       });
     })
   );
+
+  useEffect(() => {
+    if (gameOn) {
+      gameTimer = setInterval(
+        () => setTimeLeft((timeLeft) => timeLeft - 1),
+        1000
+      );
+    }
+  }, [gameOn]);
+
+  useEffect(() => {
+    if (gameOn && timeLeft === 0) {
+      clearInterval(gameTimer);
+      setGameOn(false);
+      alert("GAME OVER: You Scored " + score + " Points");
+      console.log("GAME OVER: You Scored " + score + " Points");
+    }
+  }, [timeLeft]);
 
   useEffect(() => {
     if (isBoardReadyToPop) {
@@ -54,6 +77,14 @@ const Board: FunctionComponent<IProps> = (props) => {
       setBoardComposition(newBoardComposition);
       setBoardState("loaded");
     } else if (["firstClick", "secondClick"].includes(boardState)) {
+      /* if first click of the game start timer */
+      if (!gameOn) {
+        setGameOn(true);
+        setTimeLeft(timeOfPlay);
+        setScore(0);
+        // TODO store score in some database
+      }
+
       if (boardState === "firstClick") {
         const rowIdx = clickedMarbles.firstClickedMarble.rowIdx;
         const colIdx = clickedMarbles.firstClickedMarble.colIdx;
@@ -127,7 +158,6 @@ const Board: FunctionComponent<IProps> = (props) => {
       setBoardComposition(newBoardComposition);
       setBoardState("refillHighestEmptyLayer");
     } else if (boardState === "refillHighestEmptyLayer") {
-      debugger;
       let closestToTopPops = [];
 
       closestToTopPops = getClosestToTopPops(poppedMarbles);
@@ -160,6 +190,7 @@ const Board: FunctionComponent<IProps> = (props) => {
   return (
     <>
       <ScoreBoard score={score} />
+      <GameTimer seconds={timeLeft} />
       <div className="board">{renderBoard()}</div>
     </>
   );
