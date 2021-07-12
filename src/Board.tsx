@@ -1,5 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import Marble from "./Marble";
+import ScoreBoard from "./ScoreBoard";
 
 interface IProps {
   boardSize: number;
@@ -27,6 +28,8 @@ const Board: FunctionComponent<IProps> = (props) => {
     },
   });
 
+  const [score, setScore] = useState(0);
+  const [boardState, setBoardState] = useState("unloaded");
   const [poppedMarbles, setPoppedMarbles] = useState<IMarble[]>([]);
   const [isBoardReadyToPop, setIsBoardReadyToPop] = useState(false);
   const [boardComposition, setBoardComposition] = useState(
@@ -36,7 +39,6 @@ const Board: FunctionComponent<IProps> = (props) => {
       });
     })
   );
-  const [boardState, setBoardState] = useState("unloaded");
 
   useEffect(() => {
     if (isBoardReadyToPop) {
@@ -55,13 +57,10 @@ const Board: FunctionComponent<IProps> = (props) => {
       if (boardState === "firstClick") {
         const rowIdx = clickedMarbles.firstClickedMarble.rowIdx;
         const colIdx = clickedMarbles.firstClickedMarble.colIdx;
-        newBoardComposition[rowIdx][colIdx] = clickedMarbles.firstClickedMarble;
+        newBoardComposition[rowIdx][colIdx].isClicked = true;
       } else if (boardState === "secondClick") {
         const rowIdx = clickedMarbles.secondClickedMarble.rowIdx;
         const colIdx = clickedMarbles.secondClickedMarble.colIdx;
-
-        newBoardComposition[rowIdx][colIdx] =
-          clickedMarbles.secondClickedMarble;
 
         const areClicksNeighbors = areNeighbors(
           clickedMarbles.firstClickedMarble,
@@ -74,13 +73,13 @@ const Board: FunctionComponent<IProps> = (props) => {
         );
 
         if (areClicksNeighbors) {
+          newBoardComposition[rowIdx][colIdx].isClicked = true;
           setBoardState("switchClickedMarbles");
         } else if (isFirstMarbleDoubleClicked) {
           newBoardComposition[rowIdx][colIdx].isClicked = false;
           resetClickedMarbles();
         } else {
           // if the second click is neither neigbor nor same as first one - aka mistake
-          newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
           setClickedMarbles({
             ...clickedMarbles,
             secondClickedMarble: {
@@ -123,6 +122,7 @@ const Board: FunctionComponent<IProps> = (props) => {
       let readyToPop = findReadyToPopWholeBoard(newBoardComposition);
       newBoardComposition = popMarbles(readyToPop, newBoardComposition);
 
+      setScore((score) => score + readyToPop.length);
       setPoppedMarbles(readyToPop);
       setBoardComposition(newBoardComposition);
       setBoardState("refillHighestEmptyLayer");
@@ -157,7 +157,12 @@ const Board: FunctionComponent<IProps> = (props) => {
     }
   }, [boardState]);
 
-  return <div className="board">{renderBoard()}</div>;
+  return (
+    <>
+      <ScoreBoard score={score} />
+      <div className="board">{renderBoard()}</div>
+    </>
+  );
 
   // --------------- Functions --------------------------
 

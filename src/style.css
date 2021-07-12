@@ -5,7 +5,7 @@
 
 :root {
   --board-size: 5;
-  --cell-size: 30px;
+  --marble-size: 30px;
   --small-marble: 20px;
 }
 
@@ -15,23 +15,27 @@
   gap: 1px;
 }
 
+.scoreBoard {
+  color: white;
+}
+
 .row {
   display: flex;
   flex-flow: row;
-  width: calc(var(--board-size) * var(--cell-size));
+  width: calc(var(--board-size) * var(--marble-size));
 }
 
 .cellBox {
   display: flex;
   justify-content: center;
-  width: var(--cell-size);
-  height: var(--cell-size);
+  width: var(--marble-size);
+  height: var(--marble-size);
 }
 
 .marble {
-  height: var(--cell-size);
-  width: var(--cell-size);
-  background-color: #bbb;
+  height: var(--marble-size);
+  width: var(--marble-size);
+  background-color: black;
   border-radius: 50%;
 }
 
