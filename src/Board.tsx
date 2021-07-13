@@ -1,6 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import GameTimer from "./GameTimer";
 import Marble from "./Marble";
+import Modal from "./Modal";
 import ScoreBoard from "./ScoreBoard";
 
 interface IProps {
@@ -33,6 +34,7 @@ const Board: FunctionComponent<IProps> = (props) => {
     },
   });
 
+  const [showModal, setShowModal] = useState(false);
   const [gameOn, setGameOn] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeOfPlay);
   const [score, setScore] = useState(0);
@@ -53,20 +55,18 @@ const Board: FunctionComponent<IProps> = (props) => {
         () => setTimeLeft((timeLeft) => timeLeft - 1),
         1000
       );
+    } else {
+      setTimeLeft(timeOfPlay);
+      setScore(0);
+      resetClickedMarbles();
+      setBoardState("unloaded");
     }
   }, [gameOn]);
 
   useEffect(() => {
     if (gameOn && timeLeft === 0) {
       clearInterval(gameTimer);
-      alert("GAME OVER: You Scored " + score + " Points");
-      console.log("GAME OVER: You Scored " + score + " Points");
-
-      setGameOn(false);
-      setTimeLeft(timeOfPlay);
-      setScore(0);
-      resetClickedMarbles();
-      setBoardState("unloaded");
+      setShowModal(true);
     }
   }, [timeLeft]);
 
@@ -198,14 +198,6 @@ const Board: FunctionComponent<IProps> = (props) => {
       }
     }
   }, [boardState]);
-
-  return (
-    <>
-      <ScoreBoard score={score} />
-      <GameTimer seconds={timeLeft} />
-      <div className="board">{renderBoard()}</div>
-    </>
-  );
 
   // --------------- Functions --------------------------
 
@@ -550,6 +542,44 @@ const Board: FunctionComponent<IProps> = (props) => {
     });
     return boardComposition;
   }
+
+  function saveScore() {
+    // TODO
+    // debugger;
+    // var csv = "nickname,score\n";
+  }
+
+  return (
+    <>
+      <ScoreBoard score={score} />
+      <GameTimer seconds={timeLeft} />
+      <div className="board">{renderBoard()}</div>
+      {showModal ? (
+        <Modal>
+          <h1> Game Over </h1>
+          <h2> You have popped {score} marbles</h2>
+          <div className="submitScoreForm">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveScore();
+                setShowModal(false);
+                setGameOn(false);
+              }}
+            >
+              <input
+                type="text"
+                id="yourNickname"
+                placeholder="Enter your nickname"
+              />
+
+              <button>Submit</button>
+            </form>
+          </div>
+        </Modal>
+      ) : null}
+    </>
+  );
 };
 
 export default Board;
