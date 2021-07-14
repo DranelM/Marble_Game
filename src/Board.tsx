@@ -1,5 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import GameTimer from "./GameTimer";
+import InfoBoard from "./InfoBoard";
 import Marble from "./Marble";
 import Modal from "./Modal";
 import ScoreBoard from "./ScoreBoard";
@@ -210,9 +211,9 @@ const Board: FunctionComponent<IProps> = (props) => {
       <div className="row" key={rowIdx}>
         {row.map((marble: IMarble, colIdx: number) => {
           return (
-            <div className="cellBox" key={colIdx}>
+            <div className="cellBox" key={hashPositionKey(marble)}>
               <Marble
-                key={marble.colIdx}
+                key={hashPositionKey(marble)}
                 col={marble.colIdx}
                 row={marble.rowIdx}
                 color={marble.color}
@@ -316,10 +317,10 @@ const Board: FunctionComponent<IProps> = (props) => {
         verticalSolution.length >= solutionLength ? verticalSolution : [];
 
       horizontalSolution.forEach((marble) => {
-        readyToPop[hashTheReadyToPopMarble(marble)] = marble;
+        readyToPop[hashPositionKey(marble)] = marble;
       });
       verticalSolution.forEach((marble) => {
-        readyToPop[hashTheReadyToPopMarble(marble)] = marble;
+        readyToPop[hashPositionKey(marble)] = marble;
       });
     });
 
@@ -327,7 +328,7 @@ const Board: FunctionComponent<IProps> = (props) => {
     return readyToPop.reduce((acc, cur) => (!!cur ? acc.concat(cur) : acc), []);
   }
 
-  function hashTheReadyToPopMarble(position: IMarble) {
+  function hashPositionKey(position: IMarble) {
     return position.rowIdx * boardSize + position.colIdx;
   }
 
@@ -551,18 +552,17 @@ const Board: FunctionComponent<IProps> = (props) => {
 
   return (
     <>
-      <ScoreBoard score={score} />
-      <GameTimer seconds={timeLeft} />
+      <InfoBoard score={score} timeLeft={timeLeft} />
       <div className="board">{renderBoard()}</div>
       {showModal ? (
         <Modal>
           <h1> Game Over </h1>
-          <h2> You have popped {score} marbles</h2>
-          <div className="submitScoreForm">
-            <form
+          <h2>You popped {score} marbles</h2>
+          {/* <div className="submitScoreForm">
+           <form
               onSubmit={(e) => {
                 e.preventDefault();
-                saveScore();
+                // saveScore();
                 setShowModal(false);
                 setGameOn(false);
               }}
@@ -573,9 +573,16 @@ const Board: FunctionComponent<IProps> = (props) => {
                 placeholder="Enter your nickname"
               />
 
-              <button>Submit</button>
-            </form>
-          </div>
+            </form> 
+          </div> */}
+          <button
+            onClick={(e) => {
+              setShowModal(false);
+              setGameOn(false);
+            }}
+          >
+            Play Again
+          </button>
         </Modal>
       ) : null}
     </>

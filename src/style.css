@@ -1,27 +1,51 @@
 * {
   box-sizing: border-box;
-  background-color: black;
+  font-family: "Source Sans Pro", sans-serif;
+  font-style: "Light 300";
 }
 
 :root {
   --board-size: 5;
-  --marble-size: 30px;
-  --small-marble: 20px;
+  --marble-size: 100px;
+  --small-marble: 50px;
+}
+
+h1,
+h2 {
+  margin-top: 2%;
+}
+
+html {
+  background: url(./assets/space3.jpg) no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+#root {
+  position: fixed;
+  display: flex;
+  flex-flow: column wrap;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
 }
 
 .board {
   display: flex;
   flex-flow: column;
-  gap: 1px;
 }
 
-h1,
-h2,
-form,
-label,
-#yourNickname {
-  background: #faeff0;
-  color: black;
+.infoBoard {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  color: #faeff0;
+  margin-bottom: 2%;
 }
 
 input {
@@ -46,18 +70,18 @@ input {
 }
 
 #modal div {
-  background-color: white;
-  /* max-width: 500px; */
+  background-color: #faeff0;
+  color: black;
   padding: 15px;
   text-align: center;
-  border-radius: 30px;
-  background: #faeff0;
+  border-radius: 20%;
+  margin-bottom: 15px;
 }
 
 #modal button {
-  background-color: #ad343e;
+  background: url(assets/blueMarble5.png) repeat center;
   padding: 5px 25px;
-  color: white;
+  color: #faeff0;
   font-size: 18px;
   border: #333 1px solid;
   border-radius: 5px;
@@ -71,18 +95,16 @@ input {
 }
 
 .scoreBoard {
-  color: white;
+  font-size: xxx-large;
 }
 
 .gameTimer {
-  color: white;
-  margin-bottom: 5px;
+  font-size: xx-large;
 }
 
 .row {
   display: flex;
   flex-flow: row;
-  width: calc(var(--board-size) * var(--marble-size));
 }
 
 .cellBox {
@@ -95,7 +117,6 @@ input {
 .marble {
   height: var(--marble-size);
   width: var(--marble-size);
-  background-color: black;
   border-radius: 50%;
 }
 
@@ -106,13 +127,24 @@ input {
 }
 
 .blueMarble {
-  background-color: rgba(5, 143, 255, 0.85);
+  background: url(assets/blueMarble5.png) no-repeat center;
+  background-size: cover;
 }
 
 .pinkMarble {
-  background-color: rgb(255, 4, 164);
+  background: url(assets/pinkMarble5.png) no-repeat center;
+  background-size: cover;
 }
 
 .orangeMarble {
-  background-color: rgb(255, 103, 26);
+  background: url(assets/orangeMarble5.png) no-repeat center;
+  background-size: cover;
+}
+
+.backgroudAtrribute {
+  position: fixed;
+  top: 0;
+  right: 0;
+  font-size: xx-small;
+  color: lightpink;
 }
