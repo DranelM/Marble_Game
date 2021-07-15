@@ -16,6 +16,7 @@ interface IMarble {
   colIdx: number;
   color: string;
   isClicked?: boolean;
+  popped?: boolean;
 }
 
 const MARBLECOLORCLASSES = ["", "blueMarble", "pinkMarble", "orangeMarble"];
@@ -54,9 +55,9 @@ const Board: FunctionComponent<IProps> = (props) => {
   useEffect(() => {
     if (gameOn) {
       if (!showInfoModal) {
-        gameTimer = setInterval(() => {
-          setTimeLeft((timeLeft) => timeLeft - 1);
-        }, 1000);
+        // gameTimer = setInterval(() => {
+        //   setTimeLeft((timeLeft) => timeLeft - 1);
+        // }, 1000);
       } else {
         clearInterval(gameTimer);
       }
@@ -167,13 +168,14 @@ const Board: FunctionComponent<IProps> = (props) => {
 
       setIsBoardReadyToPop(isReadyToPopMarbles);
     } else if (boardState === "popReadyToPopMarbles") {
+      debugger;
       let readyToPop = findReadyToPopWholeBoard(newBoardComposition);
       newBoardComposition = popMarbles(readyToPop, newBoardComposition);
 
       setScore((score) => score + readyToPop.length);
       setPoppedMarbles(readyToPop);
       setBoardComposition(newBoardComposition);
-      setBoardState("refillHighestEmptyLayer");
+      setBoardState("checkIfBoardRefilled");
     } else if (boardState === "refillHighestEmptyLayer") {
       let closestToTopPops = [];
 
@@ -189,18 +191,22 @@ const Board: FunctionComponent<IProps> = (props) => {
 
       setPoppedMarbles(partiallyFilledPoppedMarbles);
       setBoardComposition(newBoardComposition);
-      setIsBoardReadyToPop(
-        findReadyToPopWholeBoard(newBoardComposition).length > 0
-      );
+
       setBoardState("checkIfBoardRefilled");
+      debugger;
     } else if (boardState === "checkIfBoardRefilled") {
-      if (poppedMarbles.length > 0) {
-        setBoardState("refillHighestEmptyLayer");
-      } else if (isBoardReadyToPop) {
-        setBoardState("popReadyToPopMarbles");
-      } else {
-        setBoardState("boardFullyRefilled");
-      }
+      setTimeout(() => {
+        debugger;
+        if (poppedMarbles.length > 0) {
+          setBoardState("refillHighestEmptyLayer");
+          setIsBoardReadyToPop(false);
+        } else {
+          let isBoardReady =
+            findReadyToPopWholeBoard(newBoardComposition).length > 0;
+          setIsBoardReadyToPop(isBoardReady);
+          debugger;
+        }
+      }, 100);
     }
   }, [boardState]);
 
@@ -221,6 +227,7 @@ const Board: FunctionComponent<IProps> = (props) => {
                 col={marble.colIdx}
                 row={marble.rowIdx}
                 color={marble.color}
+                isPopped={marble.popped}
                 onClick={() => handleMarbleClick(marble)}
                 isClicked={marble.isClicked}
               />
@@ -481,6 +488,7 @@ const Board: FunctionComponent<IProps> = (props) => {
   }
 
   function findReadyToPopWholeBoard(boardComposition: IMarble[][]) {
+    debugger;
     let marblesArray = boardComposition.reduce(
       (acc, curr) => acc.concat(...curr),
       []
@@ -489,6 +497,8 @@ const Board: FunctionComponent<IProps> = (props) => {
       boardComposition,
       ...marblesArray
     );
+
+    debugger;
 
     return readyToPop;
   }
@@ -521,7 +531,11 @@ const Board: FunctionComponent<IProps> = (props) => {
         const bottomMarble = boardComposition[marble.rowIdx - i][marble.colIdx];
         const topMarble =
           marble.rowIdx - i - 1 >= 0
-            ? boardComposition[marble.rowIdx - i - 1][marble.colIdx]
+            ? Object.assign(
+                {},
+                boardComposition[marble.rowIdx - i - 1][marble.colIdx],
+                { popped: false }
+              )
             : { rowIdx: -1, colIdx: -1, color: "" };
         boardComposition = switchSelectedMarbles(
           bottomMarble,
@@ -548,6 +562,7 @@ const Board: FunctionComponent<IProps> = (props) => {
   function popMarbles(readyToPop: IMarble[], boardComposition: IMarble[][]) {
     readyToPop.forEach((position: { rowIdx: number; colIdx: number }) => {
       boardComposition[position.rowIdx][position.colIdx].color = "";
+      boardComposition[position.rowIdx][position.colIdx].popped = true;
     });
     return boardComposition;
   }
@@ -565,6 +580,7 @@ const Board: FunctionComponent<IProps> = (props) => {
         timeLeft={timeLeft}
         showInfoModal={showInfoModal}
         handleInfoClick={handleInfoClick}
+        playTime={timeOfPlay}
       />
       <div className="board">{renderBoard()}</div>
       {showEndModal ? (

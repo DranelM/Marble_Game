@@ -6,13 +6,15 @@ interface IProps {
   color: string;
   onClick: MouseEventHandler<HTMLDivElement>;
   isClicked?: boolean;
+  isPopped?: boolean;
 }
 
 const Marble: FunctionComponent<IProps> = (props) => {
-  const { col, row, color, isClicked } = props;
+  const { col, row, color, isClicked, isPopped } = props;
   const clicked = isClicked ? "clicked" : "";
+  const popped = isPopped ? "popped" : "";
 
-  let className = `marble ${color} ${clicked}`;
+  let className = `marble ${color} ${clicked} ${popped}`;
 
   return <div className={className} onClick={props.onClick}></div>;
 };

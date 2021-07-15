@@ -136,6 +136,11 @@ input {
   margin: auto;
 }
 
+.popped {
+  background-image: url(assets/boom6.png);
+  transition: background-image 0.1s ease-in-out;
+}
+
 .blueMarble {
   background: url(assets/blueMarble6.png) no-repeat center;
   background-size: cover;

@@ -8,10 +8,11 @@ interface IProps {
   timeLeft: number;
   showInfoModal: boolean;
   handleInfoClick: Function;
+  playTime: number;
 }
 
 const InfoBoard: FunctionComponent<IProps> = (props) => {
-  const { score, timeLeft, showInfoModal, handleInfoClick } = props;
+  const { score, timeLeft, showInfoModal, handleInfoClick, playTime } = props;
 
   return (
     <div className="infoBoard">
@@ -29,8 +30,10 @@ const InfoBoard: FunctionComponent<IProps> = (props) => {
               The game is simple. Replace the adjacent marbles to set 3 of a
               kind in a row or a column. It will make them pop. <br />
               <br /> One marble pop = 1 point. <br /> Replacing the marbles
-              without popping = -5 points. <br /> <br /> You have 10 seconds to
-              pop as many marbles as you can. <br /> Enjoy!
+              without popping = -5 points. <br /> <br /> You have {
+                playTime
+              }{" "}
+              seconds to pop as many marbles as you can. <br /> Enjoy!
             </span>
             <button
               className="instr-button"
