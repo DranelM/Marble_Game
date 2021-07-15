@@ -1,12 +1,12 @@
 {
   "name": "marbles_game",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.html",
   "scripts": {
     "lint": "eslint \"src/**/*.{js,jsx}\" --quiet",
     "format": "prettier --write \"src/**/*.{js, jsx, ts, tsx}\"",
     "dev": "parcel public/index.html",
-    "build": "parcel build public/index.html",
+    "build": "parcel build public/index.html --public-url ./ ",
     "deploy": "rm -rf dist/ && npm run build && gh-pages -d dist"
   },
   "keywords": [],
@@ -44,6 +44,6 @@
   "bugs": {
     "url": "https://github.com/DranelM/Marble_Game/issues"
   },
-  "homepage": "https://DranelM.github.io/Marble_Game",
+  "homepage": "https://DranelM.github.io/Marble_Game/",
   "description": ""
 }
