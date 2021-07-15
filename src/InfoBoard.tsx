@@ -24,8 +24,9 @@ const InfoBoard: FunctionComponent<IProps> = (props) => {
             <span className="instr-text">
               The game is simple. Replace the adjacent marbles to set 3 of a
               kind in a row or a column. It will make them pop. <br />
-              <br /> One marble pop = 1 point. <br /> If you replace the marbles
-              without popping, you lose 5 points. <br /> <br /> Enjoy!
+              <br /> One marble pop = 1 point. <br /> Replacing the marbles
+              without popping = -5 points. <br /> <br /> You have 10 seconds to
+              pop as much as you can. <br /> Enjoy!
             </span>
             <button className="instr-button"> Let's POP</button>
           </Modal>
