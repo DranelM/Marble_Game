@@ -38,6 +38,8 @@ html {
 .board {
   display: flex;
   flex-flow: column;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
 }
 
 .infoBoard {
@@ -45,7 +47,9 @@ html {
   flex-flow: column;
   align-items: center;
   color: #faeff0;
-  margin-bottom: 2%;
+  margin-bottom: 1%;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
 }
 
 input {
@@ -79,7 +83,7 @@ input {
 }
 
 #modal button {
-  background: url(assets/blueMarble5.png) repeat center;
+  background: url(assets/blueMarble6.png) repeat center;
   padding: 5px 25px;
   color: #faeff0;
   font-size: 18px;
@@ -91,7 +95,7 @@ input {
 }
 
 #modal button:hover {
-  background: url(assets/pinkMarble5.png) repeat center;
+  background: url(assets/pinkMarble6.png) repeat center;
   box-shadow: 1px 1px 5px #000;
 }
 
@@ -132,17 +136,17 @@ input {
 }
 
 .blueMarble {
-  background: url(assets/blueMarble5.png) no-repeat center;
+  background: url(assets/blueMarble6.png) no-repeat center;
   background-size: cover;
 }
 
 .pinkMarble {
-  background: url(assets/pinkMarble5.png) no-repeat center;
+  background: url(assets/pinkMarble6.png) no-repeat center;
   background-size: cover;
 }
 
 .orangeMarble {
-  background: url(assets/orangeMarble5.png) no-repeat center;
+  background: url(assets/orangeMarble6.png) no-repeat center;
   background-size: cover;
 }
 
@@ -152,4 +156,27 @@ input {
   right: 0;
   font-size: xx-small;
   color: lightpink;
+}
+
+@media screen and (max-width: 500px) {
+  :root {
+    --board-size: 5;
+    --marble-size: 75px;
+    --small-marble: 35px;
+  }
+  .scoreBoard {
+    font-size: xx-large;
+  }
+
+  .gameTimer {
+    font-size: x-large;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  :root {
+    --board-size: 5;
+    --marble-size: 60px;
+    --small-marble: 30px;
+  }
 }
