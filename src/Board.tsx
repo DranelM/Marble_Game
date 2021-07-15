@@ -16,7 +16,6 @@ interface IMarble {
   colIdx: number;
   color: string;
   isClicked?: boolean;
-  popped?: boolean;
 }
 
 const MARBLECOLORCLASSES = ["", "blueMarble", "pinkMarble", "orangeMarble"];
@@ -55,9 +54,9 @@ const Board: FunctionComponent<IProps> = (props) => {
   useEffect(() => {
     if (gameOn) {
       if (!showInfoModal) {
-        // gameTimer = setInterval(() => {
-        //   setTimeLeft((timeLeft) => timeLeft - 1);
-        // }, 1000);
+        gameTimer = setInterval(() => {
+          setTimeLeft((timeLeft) => timeLeft - 1);
+        }, 1000);
       } else {
         clearInterval(gameTimer);
       }
@@ -79,6 +78,8 @@ const Board: FunctionComponent<IProps> = (props) => {
   useEffect(() => {
     if (isBoardReadyToPop) {
       setBoardState("popReadyToPopMarbles");
+    } else if (poppedMarbles.length === 0) {
+      setBoardState("loaded");
     }
   }, [isBoardReadyToPop]);
 
@@ -131,7 +132,7 @@ const Board: FunctionComponent<IProps> = (props) => {
               isClicked: false,
             },
           });
-          setBoardState("clickMistake");
+          setBoardState("loaded");
         }
       }
       setBoardComposition(newBoardComposition);
@@ -168,7 +169,6 @@ const Board: FunctionComponent<IProps> = (props) => {
 
       setIsBoardReadyToPop(isReadyToPopMarbles);
     } else if (boardState === "popReadyToPopMarbles") {
-      debugger;
       let readyToPop = findReadyToPopWholeBoard(newBoardComposition);
       newBoardComposition = popMarbles(readyToPop, newBoardComposition);
 
@@ -180,6 +180,7 @@ const Board: FunctionComponent<IProps> = (props) => {
       let closestToTopPops = [];
 
       closestToTopPops = getClosestToTopPops(poppedMarbles);
+
       newBoardComposition = refillClosestToTopPops(
         closestToTopPops,
         newBoardComposition
@@ -193,10 +194,8 @@ const Board: FunctionComponent<IProps> = (props) => {
       setBoardComposition(newBoardComposition);
 
       setBoardState("checkIfBoardRefilled");
-      debugger;
     } else if (boardState === "checkIfBoardRefilled") {
       setTimeout(() => {
-        debugger;
         if (poppedMarbles.length > 0) {
           setBoardState("refillHighestEmptyLayer");
           setIsBoardReadyToPop(false);
@@ -204,9 +203,9 @@ const Board: FunctionComponent<IProps> = (props) => {
           let isBoardReady =
             findReadyToPopWholeBoard(newBoardComposition).length > 0;
           setIsBoardReadyToPop(isBoardReady);
-          debugger;
         }
-      }, 100);
+        setBoardState("loaded");
+      }, 80);
     }
   }, [boardState]);
 
@@ -227,7 +226,6 @@ const Board: FunctionComponent<IProps> = (props) => {
                 col={marble.colIdx}
                 row={marble.rowIdx}
                 color={marble.color}
-                isPopped={marble.popped}
                 onClick={() => handleMarbleClick(marble)}
                 isClicked={marble.isClicked}
               />
@@ -277,7 +275,7 @@ const Board: FunctionComponent<IProps> = (props) => {
       return (
         acc &&
         cur.reduce((acc, cur) => {
-          return acc && cur.color !== "";
+          return acc && !["popped", ""].includes(cur.color);
         }, true)
       );
     }, true);
@@ -376,6 +374,13 @@ const Board: FunctionComponent<IProps> = (props) => {
   }
 
   function handleMarbleClick(marble: IMarble) {
+    if (
+      !["loaded", "firstClick", "secondClick", "switchClickedMarbles"].includes(
+        boardState
+      )
+    ) {
+      return;
+    }
     const justClickedMarble = JSON.parse(JSON.stringify(marble));
     justClickedMarble.isClicked = true;
 
@@ -488,7 +493,6 @@ const Board: FunctionComponent<IProps> = (props) => {
   }
 
   function findReadyToPopWholeBoard(boardComposition: IMarble[][]) {
-    debugger;
     let marblesArray = boardComposition.reduce(
       (acc, curr) => acc.concat(...curr),
       []
@@ -497,8 +501,6 @@ const Board: FunctionComponent<IProps> = (props) => {
       boardComposition,
       ...marblesArray
     );
-
-    debugger;
 
     return readyToPop;
   }
@@ -561,15 +563,14 @@ const Board: FunctionComponent<IProps> = (props) => {
 
   function popMarbles(readyToPop: IMarble[], boardComposition: IMarble[][]) {
     readyToPop.forEach((position: { rowIdx: number; colIdx: number }) => {
-      boardComposition[position.rowIdx][position.colIdx].color = "";
-      boardComposition[position.rowIdx][position.colIdx].popped = true;
+      boardComposition[position.rowIdx][position.colIdx].color = "popped";
     });
     return boardComposition;
   }
 
   function saveScore() {
     // TODO
-    // debugger;
+    //
     // var csv = "nickname,score\n";
   }
 

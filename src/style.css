@@ -128,6 +128,7 @@ input {
   height: var(--marble-size);
   width: var(--marble-size);
   border-radius: 50%;
+  transition: background-image 0.1s ease-in;
 }
 
 .clicked {
@@ -137,8 +138,10 @@ input {
 }
 
 .popped {
-  background-image: url(assets/boom6.png);
-  transition: background-image 0.1s ease-in-out;
+  background: url(assets/boom6.png);
+  background-size: cover;
+  opacity: 0%;
+  transition: opacity 0.5s ease-in;
 }
 
 .blueMarble {
