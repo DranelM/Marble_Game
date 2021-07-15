@@ -16,7 +16,7 @@ h2 {
 }
 
 html {
-  background: url(./assets/space3.jpg) no-repeat center center fixed;
+  background: url(./assets/space_bg.jpg) no-repeat center center fixed;
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
@@ -56,7 +56,7 @@ input {
   text-align: center;
 }
 
-#modal {
+.modal {
   background-color: rgba(0, 0, 0, 0.6);
   position: fixed;
   display: flex;
@@ -69,33 +69,34 @@ input {
   align-items: center;
 }
 
-#modal:empty {
+.modal:empty {
   display: none;
 }
 
-#modal div {
+.modal div {
   background-color: #faeff0;
   color: black;
   padding: 15px;
   text-align: center;
-  border-radius: 20%;
+  border-radius: 15px;
   margin-bottom: 15px;
+  max-width: calc(var(--board-size) * var(--marble-size));
 }
 
-#modal button {
-  background: url(assets/blueMarble6.png) repeat center;
+.modal button {
+  background: rgba(4, 0, 255, 0.692);
   padding: 5px 25px;
   color: #faeff0;
   font-size: 18px;
   border: #333 1px solid;
   border-radius: 5px;
   display: block;
-  margin: 0 auto;
+  margin: auto;
   cursor: pointer;
 }
 
-#modal button:hover {
-  background: url(assets/pinkMarble6.png) repeat center;
+.modal button:hover {
+  background: rgba(4, 0, 255, 0.808);
   box-shadow: 1px 1px 5px #000;
 }
 
@@ -150,12 +151,25 @@ input {
   background-size: cover;
 }
 
-.backgroudAtrribute {
-  position: fixed;
-  top: 0;
-  right: 0;
-  font-size: xx-small;
-  color: lightpink;
+.instr-tooltip {
+  font-family: "Lobster", "Source Sans Pro";
+  font-size: large;
+  border-radius: 50%;
+  width: 22px;
+  text-align: center;
+  color: black;
+  background-color: rgba(250, 239, 240, 0.9);
+}
+
+.instr-text {
+  width: calc(var(--board-size) * var(--marble-size));
+  font-style: "Regular 400";
+  font-size: large;
+  color: black;
+}
+
+.instr-button.instr-button {
+  margin-top: 5%;
 }
 
 @media screen and (max-width: 500px) {
