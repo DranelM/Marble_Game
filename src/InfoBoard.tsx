@@ -1,4 +1,4 @@
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, MouseEventHandler, useState } from "react";
 import GameTimer from "./GameTimer";
 import Modal from "./Modal";
 import ScoreBoard from "./ScoreBoard";
@@ -6,20 +6,24 @@ import ScoreBoard from "./ScoreBoard";
 interface IProps {
   score: number;
   timeLeft: number;
+  showInfoModal: boolean;
+  handleInfoClick: Function;
 }
 
 const InfoBoard: FunctionComponent<IProps> = (props) => {
-  const { score, timeLeft } = props;
-  const [showModal, setShowModal] = useState(false);
+  const { score, timeLeft, showInfoModal, handleInfoClick } = props;
 
   return (
     <div className="infoBoard">
       <div
         className="instr-tooltip"
-        onClick={() => setShowModal((state) => !state)}
+        onClick={(e) => {
+          e.preventDefault;
+          handleInfoClick();
+        }}
       >
         i
-        {showModal ? (
+        {showInfoModal ? (
           <Modal>
             <span className="instr-text">
               The game is simple. Replace the adjacent marbles to set 3 of a
@@ -28,7 +32,16 @@ const InfoBoard: FunctionComponent<IProps> = (props) => {
               without popping = -5 points. <br /> <br /> You have 10 seconds to
               pop as many marbles as you can. <br /> Enjoy!
             </span>
-            <button className="instr-button"> Let's POP</button>
+            <button
+              className="instr-button"
+              onClick={(e) => {
+                e.preventDefault;
+                handleInfoClick();
+              }}
+            >
+              {" "}
+              Let's POP
+            </button>
           </Modal>
         ) : null}
       </div>

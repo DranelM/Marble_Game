@@ -35,7 +35,8 @@ const Board: FunctionComponent<IProps> = (props) => {
     },
   });
 
-  const [showModal, setShowModal] = useState(false);
+  const [showEndModal, setShowEndModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const [gameOn, setGameOn] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeOfPlay);
   const [score, setScore] = useState(0);
@@ -52,22 +53,25 @@ const Board: FunctionComponent<IProps> = (props) => {
 
   useEffect(() => {
     if (gameOn) {
-      gameTimer = setInterval(
-        () => setTimeLeft((timeLeft) => timeLeft - 1),
-        1000
-      );
+      if (!showInfoModal) {
+        gameTimer = setInterval(() => {
+          setTimeLeft((timeLeft) => timeLeft - 1);
+        }, 1000);
+      } else {
+        clearInterval(gameTimer);
+      }
     } else {
       setTimeLeft(timeOfPlay);
       setScore(0);
       resetClickedMarbles();
       setBoardState("unloaded");
     }
-  }, [gameOn]);
+  }, [gameOn, showInfoModal]);
 
   useEffect(() => {
     if (gameOn && timeLeft === 0) {
       clearInterval(gameTimer);
-      setShowModal(true);
+      setShowEndModal(true);
     }
   }, [timeLeft]);
 
@@ -217,7 +221,7 @@ const Board: FunctionComponent<IProps> = (props) => {
                 col={marble.colIdx}
                 row={marble.rowIdx}
                 color={marble.color}
-                onClick={() => handleClick(marble)}
+                onClick={() => handleMarbleClick(marble)}
                 isClicked={marble.isClicked}
               />
             </div>
@@ -364,7 +368,7 @@ const Board: FunctionComponent<IProps> = (props) => {
     return [leftSide, rightSide, topSide, bottomSide];
   }
 
-  function handleClick(marble: IMarble) {
+  function handleMarbleClick(marble: IMarble) {
     const justClickedMarble = JSON.parse(JSON.stringify(marble));
     justClickedMarble.isClicked = true;
 
@@ -386,6 +390,10 @@ const Board: FunctionComponent<IProps> = (props) => {
         secondClickedMarble: justClickedMarble,
       });
     }
+  }
+
+  function handleInfoClick() {
+    setShowInfoModal(!showInfoModal);
   }
 
   function areSame(marble1: IMarble, marble2: IMarble) {
@@ -552,9 +560,14 @@ const Board: FunctionComponent<IProps> = (props) => {
 
   return (
     <>
-      <InfoBoard score={score} timeLeft={timeLeft} />
+      <InfoBoard
+        score={score}
+        timeLeft={timeLeft}
+        showInfoModal={showInfoModal}
+        handleInfoClick={handleInfoClick}
+      />
       <div className="board">{renderBoard()}</div>
-      {showModal ? (
+      {showEndModal ? (
         <Modal>
           <h1> Game Over </h1>
           <h2>You popped {score} marbles</h2>
@@ -563,7 +576,7 @@ const Board: FunctionComponent<IProps> = (props) => {
               onSubmit={(e) => {
                 e.preventDefault();
                 // saveScore();
-                setShowModal(false);
+                setShowEndModal(false);
                 setGameOn(false);
               }}
             >
@@ -577,7 +590,7 @@ const Board: FunctionComponent<IProps> = (props) => {
           </div> */}
           <button
             onClick={(e) => {
-              setShowModal(false);
+              setShowEndModal(false);
               setGameOn(false);
             }}
           >
