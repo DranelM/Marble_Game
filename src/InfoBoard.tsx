@@ -26,7 +26,7 @@ const InfoBoard: FunctionComponent<IProps> = (props) => {
               kind in a row or a column. It will make them pop. <br />
               <br /> One marble pop = 1 point. <br /> Replacing the marbles
               without popping = -5 points. <br /> <br /> You have 10 seconds to
-              pop as much as you can. <br /> Enjoy!
+              pop as many marbles as you can. <br /> Enjoy!
             </span>
             <button className="instr-button"> Let's POP</button>
           </Modal>
