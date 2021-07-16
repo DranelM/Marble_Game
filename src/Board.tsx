@@ -78,8 +78,6 @@ const Board: FunctionComponent<IProps> = (props) => {
   useEffect(() => {
     if (isBoardReadyToPop) {
       setBoardState("popReadyToPopMarbles");
-    } else if (poppedMarbles.length === 0) {
-      setBoardState("loaded");
     }
   }, [isBoardReadyToPop]);
 
@@ -132,6 +130,7 @@ const Board: FunctionComponent<IProps> = (props) => {
               isClicked: false,
             },
           });
+
           setBoardState("loaded");
         }
       }
@@ -203,8 +202,10 @@ const Board: FunctionComponent<IProps> = (props) => {
           let isBoardReady =
             findReadyToPopWholeBoard(newBoardComposition).length > 0;
           setIsBoardReadyToPop(isBoardReady);
+          if (!isBoardReady) {
+            setBoardState("loaded");
+          }
         }
-        setBoardState("loaded");
       }, 80);
     }
   }, [boardState]);
@@ -377,7 +378,8 @@ const Board: FunctionComponent<IProps> = (props) => {
     if (
       !["loaded", "firstClick", "secondClick", "switchClickedMarbles"].includes(
         boardState
-      )
+      ) ||
+      poppedMarbles.length > 0
     ) {
       return;
     }
