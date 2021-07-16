@@ -1,20 +1,37 @@
-import { FunctionComponent, MouseEventHandler, useState } from "react";
+import {
+  DetailedHTMLProps,
+  FunctionComponent,
+  MouseEventHandler,
+  useState,
+} from "react";
 
 interface IProps {
   col: number;
   row: number;
   color: string;
+  hashNumber: number;
   onClick: MouseEventHandler<HTMLDivElement>;
+  onMouseDown: MouseEventHandler;
+  onMouseUp: MouseEventHandler;
+  onMouseMove: MouseEventHandler;
   isClicked?: boolean;
 }
 
 const Marble: FunctionComponent<IProps> = (props) => {
-  const { col, row, color, isClicked } = props;
+  const { hashNumber, color, isClicked } = props;
   const clicked = isClicked ? "clicked" : "";
 
-  let className = `marble ${color} ${clicked}`;
+  let className = `marble ${color} ${clicked} hash${hashNumber}`;
 
-  return <div className={className} onClick={props.onClick}></div>;
+  return (
+    <div
+      className={className}
+      onClick={props.onClick}
+      onMouseDown={props.onMouseDown}
+      onMouseUp={props.onMouseUp}
+      onMouseMove={props.onMouseMove}
+    ></div>
+  );
 };
 
 export default Marble;

@@ -125,6 +125,7 @@ input {
 }
 
 .marble {
+  position: relative;
   height: var(--marble-size);
   width: var(--marble-size);
   border-radius: 50%;
