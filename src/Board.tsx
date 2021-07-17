@@ -26,9 +26,6 @@ const MARBLESIZE = Number(
     .slice(0, -2)
 );
 
-var firstMarbleRef: HTMLElement | null;
-var secondMarbleRef: HTMLElement | null;
-
 let gameTimer: NodeJS.Timer;
 
 const Board: FunctionComponent<IProps> = (props) => {
@@ -43,7 +40,6 @@ const Board: FunctionComponent<IProps> = (props) => {
     },
   });
 
-  const [resetDraggedMarbles, setResetDraggedMarbles] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [gameOn, setGameOn] = useState(false);
@@ -97,15 +93,8 @@ const Board: FunctionComponent<IProps> = (props) => {
   useEffect(() => {
     if (isBoardReadyToPop) {
       setBoardState("popReadyToPopMarbles");
-    } else if (resetDraggedMarbles && firstMarbleRef && secondMarbleRef) {
-      debugger;
-      resetDragPosition(firstMarbleRef);
-      resetDragPosition(secondMarbleRef);
-      firstMarbleRef = null;
-      secondMarbleRef = null;
-      // setBoardState("loaded");
     }
-  }, [isBoardReadyToPop, resetDraggedMarbles]);
+  }, [isBoardReadyToPop]);
 
   useEffect(() => {
     let newBoardComposition = JSON.parse(JSON.stringify(boardComposition));
@@ -162,7 +151,6 @@ const Board: FunctionComponent<IProps> = (props) => {
       }
       setBoardComposition(newBoardComposition);
     } else if (boardState === "switchClickedMarbles") {
-      debugger;
       newBoardComposition = switchSelectedMarbles(
         clickedMarbles.firstClickedMarble,
         clickedMarbles.secondClickedMarble,
@@ -191,10 +179,10 @@ const Board: FunctionComponent<IProps> = (props) => {
       // If player switches marbles without pop he loses points
       if (!isReadyToPopMarbles) {
         setScore((score) => score - POINTSPENALTY);
+        setBoardState("loaded");
       }
 
       setIsBoardReadyToPop(isReadyToPopMarbles);
-      setResetDraggedMarbles(true);
     } else if (boardState === "popReadyToPopMarbles") {
       let readyToPop = findReadyToPopWholeBoard(newBoardComposition);
       newBoardComposition = popMarbles(readyToPop, newBoardComposition);
@@ -245,6 +233,8 @@ const Board: FunctionComponent<IProps> = (props) => {
   }
 
   function renderRow(row: IMarble[], rowIdx: number) {
+    var firstMarbleRef: HTMLElement | null;
+    var secondMarbleRef: HTMLElement | null;
     var firstMarblePos: { X: number; Y: number };
     var dragging = false;
     var distanceDragged = 0;
@@ -267,137 +257,35 @@ const Board: FunctionComponent<IProps> = (props) => {
                 color={marble.color}
                 onClick={() => {}}
                 onMouseDown={(e) => {
-                  setResetDraggedMarbles(false);
                   e.preventDefault;
                   dragging = true;
                   firstMarbleRef = document.querySelector(
                     `.hash${hashPositionKey(marble)}`
                   );
+
                   firstMarblePos = { X: e.pageX, Y: e.pageY };
 
                   mouseDownNeighbors = getNeighbors(rowIdx, colIdx);
-                  console.log("DOWN");
                 }}
                 onMouseUp={(e) => {
                   e.preventDefault;
-                  debugger;
                   if (distanceDragged > MARBLESIZE / 2) {
                     dragMarbles(firstMarbleRef, secondMarbleRef);
-                  } else {
-                    resetDragPosition(firstMarbleRef);
-                    resetDragPosition(secondMarbleRef);
                   }
-                  if (firstMarbleRef && secondMarbleRef) {
-                    firstMarbleRef.style.zIndex = "0";
-                    // resetDragPosition(firstMarbleRef);
-                    // resetDragPosition(secondMarbleRef);
-                  }
+
+                  resetDraggedMarbles(firstMarbleRef, secondMarbleRef);
                   dragging = false;
-                  console.log("UP");
                 }}
                 onMouseMove={(e) => {
                   if (dragging && !!firstMarbleRef) {
-                    firstMarbleRef.style.zIndex = "2";
-                    let horizontal = e.pageX - firstMarblePos.X;
-                    let vertical = e.pageY - firstMarblePos.Y;
-                    const movingHorizontally =
-                      Math.abs(horizontal) > Math.abs(vertical);
-                    const movingVertically =
-                      Math.abs(horizontal) < Math.abs(vertical);
-
-                    if (movingHorizontally) {
-                      distanceDragged = Math.abs(horizontal);
-                      resetDragPosition(firstMarbleRef, "vertical");
-                      resetDragPosition(secondMarbleRef);
-                      if (horizontal < 0) {
-                        let leftNeighbor = mouseDownNeighbors.filter(
-                          (neighbor) => neighbor.position === "left"
-                        )[0];
-                        if (leftNeighbor) {
-                          secondMarbleRef = document.querySelector(
-                            `.hash${hashPositionKey(
-                              boardComposition[leftNeighbor.rowIdx][
-                                leftNeighbor.colIdx
-                              ]
-                            )}`
-                          );
-                          if (secondMarbleRef) {
-                            const outOfBounds =
-                              MARBLESIZE - Math.abs(horizontal) <= 0;
-                            let move = outOfBounds ? -MARBLESIZE : horizontal;
-                            firstMarbleRef.style["left"] = `${move}px`;
-                            secondMarbleRef.style["left"] = `${-move}px`;
-                          }
-                        }
-                      } else if (horizontal >= 0) {
-                        let rightNeighbor = mouseDownNeighbors.filter(
-                          (neighbor) => neighbor.position === "right"
-                        )[0];
-                        if (rightNeighbor) {
-                          secondMarbleRef = document.querySelector(
-                            `.hash${hashPositionKey(
-                              boardComposition[rightNeighbor.rowIdx][
-                                rightNeighbor.colIdx
-                              ]
-                            )}`
-                          );
-                          if (secondMarbleRef) {
-                            const outOfBounds =
-                              MARBLESIZE - Math.abs(horizontal) <= 0;
-                            let move = outOfBounds ? MARBLESIZE : horizontal;
-                            firstMarbleRef.style.left = `${move}px`;
-                            secondMarbleRef.style.left = `${-move}px`;
-                          }
-                        }
-                      }
-                    } else if (movingVertically) {
-                      distanceDragged = Math.abs(vertical);
-
-                      resetDragPosition(firstMarbleRef, "horizontal");
-                      resetDragPosition(secondMarbleRef);
-                      if (vertical < 0) {
-                        let topNeighbor = mouseDownNeighbors.filter(
-                          (neighbor) => neighbor.position === "top"
-                        )[0];
-                        if (topNeighbor) {
-                          secondMarbleRef = document.querySelector(
-                            `.hash${hashPositionKey(
-                              boardComposition[topNeighbor.rowIdx][
-                                topNeighbor.colIdx
-                              ]
-                            )}`
-                          );
-                          if (secondMarbleRef) {
-                            const outOfBounds =
-                              MARBLESIZE - Math.abs(vertical) <= 0;
-                            let move = outOfBounds ? -MARBLESIZE : vertical;
-                            firstMarbleRef.style.top = `${move}px`;
-                            secondMarbleRef.style.top = `${-move}px`;
-                          }
-                        }
-                      } else if (vertical >= 0) {
-                        let bottomNeighbor = mouseDownNeighbors.filter(
-                          (neighbor) => neighbor.position === "bottom"
-                        )[0];
-                        if (bottomNeighbor) {
-                          secondMarbleRef = document.querySelector(
-                            `.hash${hashPositionKey(
-                              boardComposition[bottomNeighbor.rowIdx][
-                                bottomNeighbor.colIdx
-                              ]
-                            )}`
-                          );
-                          console.log(MARBLESIZE - Math.abs(vertical));
-                          if (secondMarbleRef) {
-                            const outOfBounds =
-                              MARBLESIZE - Math.abs(vertical) <= 0;
-                            let move = outOfBounds ? MARBLESIZE : vertical;
-                            firstMarbleRef.style.top = `${move}px`;
-                            secondMarbleRef.style.top = `${-move}px`;
-                          }
-                        }
-                      }
-                    }
+                    //@ts-ignore
+                    [distanceDragged, secondMarbleRef] = handleDragging(
+                      e,
+                      firstMarbleRef,
+                      secondMarbleRef,
+                      firstMarblePos,
+                      mouseDownNeighbors
+                    );
                   }
                 }}
                 isClicked={marble.isClicked}
@@ -407,6 +295,100 @@ const Board: FunctionComponent<IProps> = (props) => {
         })}
       </div>
     );
+  }
+
+  function handleDragging(
+    // @ts-ignore
+    e: MouseEvent<Element, MouseEvent>,
+    firstMarbleRef: HTMLElement | null,
+    secondMarbleRef: HTMLElement | null,
+    firstMarblePos: { X: number; Y: number },
+    mouseDownNeighbors: {
+      rowIdx: number;
+      colIdx: number;
+      position: string;
+    }[]
+  ) {
+    if (firstMarbleRef) firstMarbleRef.style.zIndex = "2";
+    let distanceDragged = 0;
+    let horizontal = e.pageX - firstMarblePos.X;
+    let vertical = e.pageY - firstMarblePos.Y;
+    const movingHorizontally = Math.abs(horizontal) > Math.abs(vertical);
+    const movingVertically = Math.abs(horizontal) < Math.abs(vertical);
+
+    if (movingHorizontally) {
+      // @ts-ignore
+      [distanceDragged, secondMarbleRef] = visualDragMovement(
+        firstMarbleRef,
+        secondMarbleRef,
+        mouseDownNeighbors,
+        horizontal,
+        "vertical"
+      );
+    } else if (movingVertically) {
+      // @ts-ignore
+      [distanceDragged, secondMarbleRef] = visualDragMovement(
+        firstMarbleRef,
+        secondMarbleRef,
+        mouseDownNeighbors,
+        vertical,
+        "horizontal"
+      );
+    }
+
+    return [distanceDragged, secondMarbleRef];
+  }
+
+  function visualDragMovement(
+    firstMarbleRef: HTMLElement | null,
+    secondMarbleRef: HTMLElement | null,
+    mouseDownNeighbors: {
+      rowIdx: number;
+      colIdx: number;
+      position: string;
+    }[],
+    distanceDragged: number,
+    blockedAxis: string
+  ) {
+    let neighborSides =
+      blockedAxis === "vertical" ? ["left", "right"] : ["top", "bottom"];
+
+    let neighborSide: string;
+
+    // to make the dragged marble move in one axis only
+    resetDragPosition(firstMarbleRef, blockedAxis);
+    resetDragPosition(secondMarbleRef);
+
+    if (distanceDragged < 0) {
+      neighborSide = neighborSides[0];
+    } else {
+      neighborSide = neighborSides[1];
+    }
+
+    let plusMinusSign = ["left", "top"].includes(neighborSide) ? -1 : 1;
+
+    let neighbor = mouseDownNeighbors.filter(
+      (neighbor) => neighbor.position === neighborSide
+    )[0];
+
+    if (neighbor) {
+      secondMarbleRef = document.querySelector(
+        `.hash${hashPositionKey(
+          boardComposition[neighbor.rowIdx][neighbor.colIdx]
+        )}`
+      );
+
+      if (firstMarbleRef && secondMarbleRef) {
+        const outOfBounds = MARBLESIZE - Math.abs(distanceDragged) <= 0;
+        let move = outOfBounds ? plusMinusSign * MARBLESIZE : distanceDragged;
+        //@ts-ignore
+        firstMarbleRef.style[neighborSides[0]] = `${move}px`;
+        //@ts-ignore
+        secondMarbleRef.style[neighborSides[0]] = `${-move}px`;
+      }
+    }
+
+    return [Math.abs(distanceDragged), secondMarbleRef];
   }
 
   function resetDragPosition(marbleRef: HTMLElement | null, line: string = "") {
@@ -419,6 +401,17 @@ const Board: FunctionComponent<IProps> = (props) => {
 
     if (["horizontal", ""].includes(line)) {
       marbleRef.style.left = "0px";
+    }
+  }
+
+  function resetDraggedMarbles(
+    firstMarbleRef: HTMLElement | null,
+    secondMarbleRef: HTMLElement | null
+  ) {
+    if (firstMarbleRef && secondMarbleRef) {
+      firstMarbleRef.style.zIndex = "0";
+      resetDragPosition(firstMarbleRef);
+      resetDragPosition(secondMarbleRef);
     }
   }
 
@@ -483,8 +476,7 @@ const Board: FunctionComponent<IProps> = (props) => {
   }
 
   function getMarbleFromHash(hashPosition: number | undefined) {
-    debugger;
-    if (hashPosition) {
+    if (hashPosition !== undefined) {
       let rowIdx = Math.floor(hashPosition / boardSize);
       let colIdx = hashPosition % boardSize;
       return JSON.parse(JSON.stringify(boardComposition[rowIdx][colIdx]));
@@ -629,10 +621,6 @@ const Board: FunctionComponent<IProps> = (props) => {
 
   function handleInfoClick() {
     setShowInfoModal(!showInfoModal);
-  }
-
-  function handleMouseDownOnMarble() {
-    console.log("DOWN");
   }
 
   function areSame(marble1: IMarble, marble2: IMarble) {

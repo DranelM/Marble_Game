@@ -129,7 +129,7 @@ input {
   height: var(--marble-size);
   width: var(--marble-size);
   border-radius: 50%;
-  transition: background-image 0.1s ease-in;
+  transition: background-image 0.1s ease-in-out;
 }
 
 .clicked {
