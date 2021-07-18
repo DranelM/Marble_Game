@@ -238,7 +238,7 @@ const Board: FunctionComponent<IProps> = (props) => {
     var firstMarblePos: { X: number; Y: number };
     var dragging = false;
     var distanceDragged = 0;
-    var mouseDownNeighbors: {
+    var touchStartNeighbors: {
       rowIdx: number;
       colIdx: number;
       position: string;
@@ -260,7 +260,7 @@ const Board: FunctionComponent<IProps> = (props) => {
                     handleMarbleClick(marble);
                   }
                 }}
-                onMouseDown={(e) => {
+                onTouchStart={(e) => {
                   if (movementMode === "drag") {
                     e.preventDefault;
                     if (!dragging) {
@@ -269,50 +269,48 @@ const Board: FunctionComponent<IProps> = (props) => {
                         `.hash${hashPositionKey(marble)}`
                       );
 
-                      firstMarblePos = { X: e.pageX, Y: e.pageY };
+                      firstMarblePos = {
+                        X: e.touches[0].clientX,
+                        Y: e.touches[0].clientY,
+                      };
 
-                      mouseDownNeighbors = getNeighbors(rowIdx, colIdx);
+                      touchStartNeighbors = getNeighbors(rowIdx, colIdx);
                     }
                   }
                 }}
-                onMouseUp={(e) => {
+                onTouchEnd={(e) => {
                   e.preventDefault;
                   ({ dragging, firstMarbleRef, secondMarbleRef } =
-                    handleMouseUp(
+                    handleTouchEnd(
                       firstMarbleRef,
                       secondMarbleRef,
                       dragging,
                       distanceDragged
                     ));
                 }}
-                onMouseMove={(e) => {
+                onTouchMove={(e) => {
+                  e.preventDefault;
                   if (dragging && !!firstMarbleRef) {
-                    //@ts-ignore
-                    [distanceDragged, secondMarbleRef] = handleDragging(
+                    ({ distanceDragged, secondMarbleRef } = handleDragging(
+                      // @ts-ignore
                       e,
                       firstMarbleRef,
                       secondMarbleRef,
                       firstMarblePos,
-                      mouseDownNeighbors
-                    );
+                      touchStartNeighbors
+                    ));
                   }
                 }}
                 isClicked={marble.isClicked}
-                onMouseOut={(e) => {
+                onTouchCancel={(e) => {
                   if (dragging) {
                     ({ dragging, firstMarbleRef, secondMarbleRef } =
-                      handleMouseUp(
+                      handleTouchEnd(
                         firstMarbleRef,
                         secondMarbleRef,
                         dragging,
                         distanceDragged
                       ));
-                    var evt = new MouseEvent("click", {
-                      view: window,
-                      clientX: firstMarblePos.X,
-                      clientY: firstMarblePos.Y,
-                    });
-                    e.target.dispatchEvent(evt);
                   }
                 }}
               />
@@ -323,7 +321,7 @@ const Board: FunctionComponent<IProps> = (props) => {
     );
   }
 
-  function handleMouseUp(
+  function handleTouchEnd(
     firstMarbleRef: HTMLElement | null,
     secondMarbleRef: HTMLElement | null,
     dragging: boolean,
@@ -345,11 +343,11 @@ const Board: FunctionComponent<IProps> = (props) => {
 
   function handleDragging(
     // @ts-ignore
-    e: MouseEvent<Element, MouseEvent>,
+    e: TouchEvent,
     firstMarbleRef: HTMLElement | null,
     secondMarbleRef: HTMLElement | null,
     firstMarblePos: { X: number; Y: number },
-    mouseDownNeighbors: {
+    touchStartNeighbors: {
       rowIdx: number;
       colIdx: number;
       position: string;
@@ -357,8 +355,8 @@ const Board: FunctionComponent<IProps> = (props) => {
   ) {
     if (firstMarbleRef) firstMarbleRef.style.zIndex = "2";
     let distanceDragged = 0;
-    let horizontal = e.pageX - firstMarblePos.X;
-    let vertical = e.pageY - firstMarblePos.Y;
+    let horizontal = e.touches[0].clientX - firstMarblePos.X;
+    let vertical = e.touches[0].clientY - firstMarblePos.Y;
     const movingHorizontally = Math.abs(horizontal) > Math.abs(vertical);
     const movingVertically = Math.abs(horizontal) < Math.abs(vertical);
 
@@ -367,7 +365,7 @@ const Board: FunctionComponent<IProps> = (props) => {
       [distanceDragged, secondMarbleRef] = visualDragMovement(
         firstMarbleRef,
         secondMarbleRef,
-        mouseDownNeighbors,
+        touchStartNeighbors,
         horizontal,
         "vertical"
       );
@@ -376,19 +374,19 @@ const Board: FunctionComponent<IProps> = (props) => {
       [distanceDragged, secondMarbleRef] = visualDragMovement(
         firstMarbleRef,
         secondMarbleRef,
-        mouseDownNeighbors,
+        touchStartNeighbors,
         vertical,
         "horizontal"
       );
     }
 
-    return [distanceDragged, secondMarbleRef];
+    return { distanceDragged, secondMarbleRef };
   }
 
   function visualDragMovement(
     firstMarbleRef: HTMLElement | null,
     secondMarbleRef: HTMLElement | null,
-    mouseDownNeighbors: {
+    touchStartNeighbors: {
       rowIdx: number;
       colIdx: number;
       position: string;
@@ -413,7 +411,7 @@ const Board: FunctionComponent<IProps> = (props) => {
 
     let plusMinusSign = ["left", "top"].includes(neighborSide) ? -1 : 1;
 
-    let neighbor = mouseDownNeighbors.filter(
+    let neighbor = touchStartNeighbors.filter(
       (neighbor) => neighbor.position === neighborSide
     )[0];
 

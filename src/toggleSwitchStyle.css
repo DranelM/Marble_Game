@@ -1,10 +1,5 @@
 .switchButton {
-  display: flex;
-  flex-flow: row;
-  justify-content: space-around;
-  align-items: center;
-  width: 100%;
-  margin-top: 4%;
+  display: none;
 }
 .moveMode {
   text-align: center;
@@ -72,6 +67,17 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+@media screen and (max-width: 1024px) {
+  .switchButton {
+    display: flex;
+    flex-flow: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    margin-top: 4%;
+  }
+}
+
 @media screen and (max-width: 380px) {
   .switch {
     width: 30px;
@@ -83,6 +89,12 @@ input:checked + .slider:before {
     width: 13px;
     left: 2px;
     bottom: 2px;
+  }
+
+  input:checked + .slider:before {
+    -webkit-transform: translateX(13px);
+    -ms-transform: translateX(13px);
+    transform: translateX(13px);
   }
 
   /* Rounded sliders */

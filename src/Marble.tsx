@@ -2,6 +2,7 @@ import {
   DetailedHTMLProps,
   FunctionComponent,
   MouseEventHandler,
+  TouchEventHandler,
   useState,
 } from "react";
 
@@ -11,10 +12,10 @@ interface IProps {
   color: string;
   hashNumber: number;
   onClick: MouseEventHandler<HTMLDivElement>;
-  onMouseDown: MouseEventHandler;
-  onMouseUp: MouseEventHandler;
-  onMouseMove: MouseEventHandler;
-  onMouseOut: MouseEventHandler;
+  onTouchStart: TouchEventHandler;
+  onTouchEnd: TouchEventHandler;
+  onTouchMove: TouchEventHandler;
+  onTouchCancel: TouchEventHandler;
   isClicked?: boolean;
 }
 
@@ -28,10 +29,10 @@ const Marble: FunctionComponent<IProps> = (props) => {
     <div
       className={className}
       onClick={props.onClick}
-      onMouseDown={props.onMouseDown}
-      onMouseUp={props.onMouseUp}
-      onMouseMove={props.onMouseMove}
-      onMouseOut={props.onMouseOut}
+      onTouchStart={props.onTouchStart}
+      onTouchEnd={props.onTouchEnd}
+      onTouchMove={props.onTouchMove}
+      onTouchCancel={props.onTouchCancel}
     ></div>
   );
 };
