@@ -9,6 +9,7 @@ interface IProps {
   showInfoModal: boolean;
   handleInfoClick: Function;
   playTime: number;
+  handleSwitchClick: Function;
 }
 
 const InfoBoard: FunctionComponent<IProps> = (props) => {
@@ -50,6 +51,22 @@ const InfoBoard: FunctionComponent<IProps> = (props) => {
       </div>
       <ScoreBoard score={score} />
       <GameTimer seconds={timeLeft} />
+      <div className="switchButton">
+        <div className="moveMode">Click</div>
+        <label className="switch">
+          <input
+            id="modeSwitch"
+            type="checkbox"
+            onClick={(e) => {
+              props.handleSwitchClick(e);
+            }}
+          />
+          <span className="slider round"></span>
+        </label>
+        <div className="moveMode">
+          Drag <br></br>(testing)
+        </div>
+      </div>
     </div>
   );
 };

@@ -14,6 +14,7 @@ interface IProps {
   onMouseDown: MouseEventHandler;
   onMouseUp: MouseEventHandler;
   onMouseMove: MouseEventHandler;
+  onMouseOut: MouseEventHandler;
   isClicked?: boolean;
 }
 
@@ -30,6 +31,7 @@ const Marble: FunctionComponent<IProps> = (props) => {
       onMouseDown={props.onMouseDown}
       onMouseUp={props.onMouseUp}
       onMouseMove={props.onMouseMove}
+      onMouseOut={props.onMouseOut}
     ></div>
   );
 };

@@ -1,9 +1,7 @@
-import { FunctionComponent, useEffect, useRef, useState } from "react";
-import GameTimer from "./GameTimer";
+import { FunctionComponent, useEffect, useState } from "react";
 import InfoBoard from "./InfoBoard";
 import Marble from "./Marble";
 import Modal from "./Modal";
-import ScoreBoard from "./ScoreBoard";
 
 interface IProps {
   boardSize: number;
@@ -40,6 +38,7 @@ const Board: FunctionComponent<IProps> = (props) => {
     },
   });
 
+  const [movementMode, setMovementMode] = useState("click");
   const [showEndModal, setShowEndModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [gameOn, setGameOn] = useState(false);
@@ -69,19 +68,20 @@ const Board: FunctionComponent<IProps> = (props) => {
   useEffect(() => {
     if (gameOn) {
       if (!showInfoModal) {
-        // gameTimer = setInterval(() => {
-        //   setTimeLeft((timeLeft) => timeLeft - 1);
-        // }, 1000);
+        gameTimer = setInterval(() => {
+          setTimeLeft((timeLeft) => timeLeft - 1);
+        }, 1000);
       } else {
         clearInterval(gameTimer);
       }
     } else {
-      setTimeLeft(timeOfPlay);
-      setScore(0);
-      resetClickedMarbles();
-      setBoardState("unloaded");
+      resetWholeGame();
     }
   }, [gameOn, showInfoModal]);
+
+  useEffect(() => {
+    resetWholeGame();
+  }, [movementMode]);
 
   useEffect(() => {
     if (gameOn && timeLeft === 0) {
@@ -255,26 +255,35 @@ const Board: FunctionComponent<IProps> = (props) => {
                 col={marble.colIdx}
                 row={marble.rowIdx}
                 color={marble.color}
-                onClick={() => {}}
+                onClick={() => {
+                  if (movementMode === "click") {
+                    handleMarbleClick(marble);
+                  }
+                }}
                 onMouseDown={(e) => {
-                  e.preventDefault;
-                  dragging = true;
-                  firstMarbleRef = document.querySelector(
-                    `.hash${hashPositionKey(marble)}`
-                  );
+                  if (movementMode === "drag") {
+                    e.preventDefault;
+                    if (!dragging) {
+                      dragging = true;
+                      firstMarbleRef = document.querySelector(
+                        `.hash${hashPositionKey(marble)}`
+                      );
 
-                  firstMarblePos = { X: e.pageX, Y: e.pageY };
+                      firstMarblePos = { X: e.pageX, Y: e.pageY };
 
-                  mouseDownNeighbors = getNeighbors(rowIdx, colIdx);
+                      mouseDownNeighbors = getNeighbors(rowIdx, colIdx);
+                    }
+                  }
                 }}
                 onMouseUp={(e) => {
                   e.preventDefault;
-                  if (distanceDragged > MARBLESIZE / 2) {
-                    dragMarbles(firstMarbleRef, secondMarbleRef);
-                  }
-
-                  resetDraggedMarbles(firstMarbleRef, secondMarbleRef);
-                  dragging = false;
+                  ({ dragging, firstMarbleRef, secondMarbleRef } =
+                    handleMouseUp(
+                      firstMarbleRef,
+                      secondMarbleRef,
+                      dragging,
+                      distanceDragged
+                    ));
                 }}
                 onMouseMove={(e) => {
                   if (dragging && !!firstMarbleRef) {
@@ -289,12 +298,49 @@ const Board: FunctionComponent<IProps> = (props) => {
                   }
                 }}
                 isClicked={marble.isClicked}
+                onMouseOut={(e) => {
+                  if (dragging) {
+                    ({ dragging, firstMarbleRef, secondMarbleRef } =
+                      handleMouseUp(
+                        firstMarbleRef,
+                        secondMarbleRef,
+                        dragging,
+                        distanceDragged
+                      ));
+                    var evt = new MouseEvent("click", {
+                      view: window,
+                      clientX: firstMarblePos.X,
+                      clientY: firstMarblePos.Y,
+                    });
+                    e.target.dispatchEvent(evt);
+                  }
+                }}
               />
             </div>
           );
         })}
       </div>
     );
+  }
+
+  function handleMouseUp(
+    firstMarbleRef: HTMLElement | null,
+    secondMarbleRef: HTMLElement | null,
+    dragging: boolean,
+    distanceDragged: number
+  ) {
+    if (!gameOn) {
+      setGameOn(true);
+      // TODO store score in some database
+    }
+    if (distanceDragged >= MARBLESIZE / 2) {
+      dragMarbles(firstMarbleRef, secondMarbleRef);
+    }
+
+    resetDraggedMarbles(firstMarbleRef, secondMarbleRef);
+    dragging = false;
+
+    return { dragging, firstMarbleRef, secondMarbleRef };
   }
 
   function handleDragging(
@@ -404,6 +450,14 @@ const Board: FunctionComponent<IProps> = (props) => {
     }
   }
 
+  function resetWholeGame() {
+    setTimeLeft(timeOfPlay);
+    setScore(0);
+    resetClickedMarbles();
+    setBoardState("unloaded");
+    setGameOn(false);
+    clearInterval(gameTimer);
+  }
   function resetDraggedMarbles(
     firstMarbleRef: HTMLElement | null,
     secondMarbleRef: HTMLElement | null
@@ -791,6 +845,14 @@ const Board: FunctionComponent<IProps> = (props) => {
     return boardComposition;
   }
 
+  function handleSwitchClick(e: MouseEvent | null) {
+    if (e && e.target) {
+      //@ts-ignore
+      let mode = e.target.checked ? "drag" : "click";
+      setMovementMode(mode);
+    }
+  }
+
   function saveScore() {
     // TODO
     //
@@ -804,6 +866,7 @@ const Board: FunctionComponent<IProps> = (props) => {
         timeLeft={timeLeft}
         showInfoModal={showInfoModal}
         handleInfoClick={handleInfoClick}
+        handleSwitchClick={handleSwitchClick}
         playTime={timeOfPlay}
       />
       <div className="board">{renderBoard()}</div>
