@@ -331,7 +331,7 @@ const Board: FunctionComponent<IProps> = (props) => {
       setGameOn(true);
       // TODO store score in some database
     }
-    if (distanceDragged >= MARBLESIZE / 2) {
+    if (distanceDragged >= MARBLESIZE / 4) {
       dragMarbles(firstMarbleRef, secondMarbleRef);
     }
 
