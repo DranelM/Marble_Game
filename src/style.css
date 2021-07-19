@@ -4,6 +4,10 @@
   font-style: "Light 300";
 }
 
+body {
+  overscroll-behavior: contain;
+}
+
 :root {
   --board-size: 5;
   --marble-size: 100px;
