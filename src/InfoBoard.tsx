@@ -64,7 +64,7 @@ const InfoBoard: FunctionComponent<IProps> = (props) => {
           <span className="slider round"></span>
         </label>
         <div className="moveMode">
-          Drag <br></br>(testing)
+          Drag <br></br>mobile <br></br> only
         </div>
       </div>
     </div>
