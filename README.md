@@ -1,5 +1,7 @@
 # Marble Game
 
+![marble game](./src/assets/marblegame.png)
+
 ## 1. Description
 
 It is a simple game with the main quest of popping marbles. Created as a "learn by practice" challenge for myself and my better understanding of React.
