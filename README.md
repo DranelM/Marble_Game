@@ -1,6 +1,6 @@
 # Marble Game
 
-![marble game](./src/assets/marblegame.png)
+<img src='./src/assets/marblegame.png' alt="Marble Game" width="1000px">
 
 ## 1. Description
 
